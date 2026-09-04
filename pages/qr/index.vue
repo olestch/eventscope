@@ -4,10 +4,17 @@ import QrPreview from '~/components/qr/QrPreview.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
 import StatePanel from '~/components/ui/StatePanel.vue'
 import StatusBadge from '~/components/ui/StatusBadge.vue'
-import { getLocation, qrAssets } from '~/data/demo'
+import { phaseOneQrCardMetrics } from '~/data/presentation/phaseOneSnapshot'
+import { eventDatasetProvider } from '~/data/provider/eventDatasetProvider'
 
 useHead({ title: 'QR studio' })
 const view = ref<'active' | 'archived'>('active')
+const catalog = eventDatasetProvider.getCatalog()
+const featuredQrIds = ['qr-harbor-entry', 'qr-river-stage', 'qr-summit-lounge']
+const qrAssets = catalog.qrCodes.filter(({ id }) => featuredQrIds.includes(id))
+const getLocation = (id?: string) => catalog.locations.find((location) => location.id === id)
+const statusLabel = (status: (typeof qrAssets)[number]['status']) =>
+  status === 'active' ? 'Active' : status === 'paused' ? 'Paused' : 'Draft'
 </script>
 
 <template>
@@ -47,14 +54,14 @@ const view = ref<'active' | 'archived'>('active')
         <div class="asset-card__body">
           <div class="asset-card__status">
             <StatusBadge
-              :label="asset.status"
-              :tone="asset.status === 'Active' ? 'positive' : 'attention'"
-            /><span>Updated {{ asset.updatedAt }}</span>
+              :label="statusLabel(asset.status)"
+              :tone="asset.status === 'active' ? 'positive' : 'attention'"
+            /><span>Updated {{ phaseOneQrCardMetrics[asset.id]?.updatedAt }}</span>
           </div>
           <h2>{{ asset.name }}</h2>
           <p>{{ getLocation(asset.locationId)?.name }}</p>
           <div class="asset-card__metric">
-            <strong>{{ asset.scans.toLocaleString('en-US') }}</strong
+            <strong>{{ phaseOneQrCardMetrics[asset.id]?.scans.toLocaleString('en-US') }}</strong
             ><span>demo scans</span>
           </div>
         </div>

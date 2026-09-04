@@ -3,10 +3,16 @@ import FilterChips from '~/components/explore/FilterChips.vue'
 import TimelineMock from '~/components/explore/TimelineMock.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
 import StatusBadge from '~/components/ui/StatusBadge.vue'
-import { campaigns, explorerSnapshot, locations } from '~/data/demo'
+import { eventDatasetProvider } from '~/data/provider/eventDatasetProvider'
+import { phaseOneExplorerSnapshot as explorerSnapshot } from '~/data/presentation/phaseOneSnapshot'
 
 useHead({ title: 'Explore' })
-const campaign = campaigns.find((item) => item.id === explorerSnapshot.campaignId)!
+const catalog = eventDatasetProvider.getCatalog()
+const dataset = eventDatasetProvider.getDataset('development')
+const campaign = catalog.campaigns.find((item) => item.id === explorerSnapshot.campaignId)!
+const locations = campaign.locationIds.map((id) =>
+  catalog.locations.find((location) => location.id === id)!
+)
 </script>
 
 <template>
@@ -34,7 +40,7 @@ const campaign = campaigns.find((item) => item.id === explorerSnapshot.campaignI
       <div>
         <span>Comparison</span><strong>{{ explorerSnapshot.previousPeriod }}</strong>
       </div>
-      <StatusBadge label="Demo data" tone="draft" />
+      <StatusBadge :label="`${dataset.eventCount.toLocaleString('en-US')} source events`" tone="draft" />
     </section>
     <FilterChips :filters="explorerSnapshot.filters" />
 

@@ -2,9 +2,9 @@
 import ReportPreview from '~/components/reports/ReportPreview.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
 import StatePanel from '~/components/ui/StatePanel.vue'
-import { getReport } from '~/data/demo'
+import { getReportDefinition } from '~/data/catalog/reportCatalog'
 const route = useRoute()
-const report = getReport(String(route.params.id))
+const report = getReportDefinition(String(route.params.id))
 useHead({ title: report?.name || 'Report' })
 </script>
 <template>

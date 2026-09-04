@@ -1,35 +1,25 @@
 # EventScope
 
-EventScope is a portfolio product concept for exploring event engagement, organizing trackable QR touchpoints, and composing decision-ready reports. Phase 1 delivers a polished application shell around one coherent fictional campaign: **Northstar Launch**.
+EventScope is a portfolio product concept for exploring event engagement, organizing tracked QR touchpoints, and composing decision-ready reports. The current fictional product story centers on **Northstar Launch**.
 
-## Why Nuxt
+## Current status
 
-The project uses Nuxt 3 as an application framework for file-based routing, layouts, conventions, and a scalable Vue structure. It runs with `ssr: false` because this phase models a data-intensive, authenticated-style workspace and has no server-owned data or SEO requirement. No server feature was added simply to justify the framework.
+Phase 2 establishes the source-data semantics behind the Nuxt 3 application shell:
 
-## Phase 1 includes
+- explicit campaign, channel, source, location, asset, QR, event, report, and analytics contract modules;
+- an inspectable reference catalog with six campaigns and 36 tracked assets;
+- seeded, versioned synthetic session journeys in fixed UTC time;
+- exact profiles of 320 test events and 10,000 development events;
+- deterministic fingerprints and structured integrity validation;
+- tested scenario patterns for launch traffic, location strength, device conversion friction, channel quality, and time distribution.
 
-- Responsive desktop, tablet, and mobile application shell
-- Explorer workspace with query context, filter chips, summary signals, an accessible SVG timeline mockup, and contextual insight
-- QR library, creation shell, and reusable asset detail/editor
-- Report library, builder shell, and on-screen report preview
-- Methodology and provenance notes
-- Typed, deterministic demo data with fixed dates and validated relationships
-- Keyboard focus treatment, mobile navigation focus handling, reduced-motion support, and accessible chart data
-- Reusable loading, empty, error, and no-results presentation states
+The Explorer reads catalog and dataset metadata through a provider boundary. Its displayed metrics and SVG timeline remain a clearly named Phase 1 presentation snapshot until the Analytics Core exists; Vue components do not perform ad hoc aggregation.
 
-## Intentionally not implemented
+## Architecture boundaries
 
-The analytical engine, anomaly detection, live data, backend services, authentication, real QR generation, file export, PDF/PPTX generation, persistence, and production-scale performance architecture belong to later phases. The interface does not make performance claims.
+Nuxt runs in client-rendered mode (`ssr: false`) because EventScope is a data-intensive application shell without server-owned data or an SEO requirement. No server functionality exists solely to justify the framework.
 
-## Technology
-
-- Nuxt 3
-- Vue 3 and TypeScript
-- SCSS design tokens and responsive styles
-- Vitest and Vue Test Utils
-- ESLint and Prettier
-
-Pinia is intentionally absent: Phase 1 has no cross-route mutable domain state that justifies a store.
+Phase 2 deliberately uses readable in-memory event records and pure deterministic functions. Analytics execution, aggregation, Web Workers, typed-array storage, indexes, caches, chart libraries, real QR rendering, exports, backend services, and million-event benchmarks are deferred.
 
 ## Local development
 
@@ -37,8 +27,6 @@ Pinia is intentionally absent: Phase 1 has no cross-route mutable domain state t
 npm install
 npm run dev
 ```
-
-The development server is available at `http://localhost:3000` by default.
 
 ## Quality checks
 
@@ -51,9 +39,15 @@ npm run build
 git diff --check
 ```
 
-## Data and provenance
+CI runs the same application quality gates on pushes and pull requests to `main`.
 
-Northstar Launch, its venues, metrics, people, QR assets, and reports are fictional and deterministic. This repository contains no commercial code or customer data.
+## Roadmap
+
+The next phase can implement Analytics Core execution against the stable query/result contracts. Storage and worker optimizations remain later, benchmark-driven work.
+
+## Provenance
+
+All campaigns, venues, people, source events, and presentation values are fictional. The repository contains no commercial code or customer data.
 
 ## License
 

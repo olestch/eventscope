@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ReportDefinition } from '~/types/demo'
+import type { ReportDefinition } from '~/domain/reports/models'
 
 defineProps<{ report: ReportDefinition }>()
 </script>

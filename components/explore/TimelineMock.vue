@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TimelinePoint } from '~/types/demo'
+import type { TimelinePoint } from '~/data/presentation/phaseOneSnapshot'
 
 defineProps<{ points: TimelinePoint[] }>()
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PageHeader from '~/components/ui/PageHeader.vue'
-import { reports } from '~/data/demo'
+import { reportCatalog as reports } from '~/data/catalog/reportCatalog'
 useHead({ title: 'New report' })
 const sections = reports[0]!.sections
 </script>

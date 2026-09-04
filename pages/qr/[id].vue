@@ -2,9 +2,9 @@
 import QrEditorShell from '~/components/qr/QrEditorShell.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
 import StatePanel from '~/components/ui/StatePanel.vue'
-import { getQrAsset } from '~/data/demo'
+import { eventDatasetProvider } from '~/data/provider/eventDatasetProvider'
 const route = useRoute()
-const asset = getQrAsset(String(route.params.id))
+const asset = eventDatasetProvider.getCatalog().qrCodes.find(({ id }) => id === String(route.params.id))
 useHead({ title: asset?.name || 'QR asset' })
 </script>
 <template>
