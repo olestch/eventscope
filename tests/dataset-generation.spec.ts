@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { generateDataset } from '~/data/generator/generateDataset'
+import { datasetProfiles, generateDataset } from '~/data/generator/generateDataset'
 import { northstarScenarioV1 } from '~/data/scenarios/northstarV1'
 
 const sessionRates = (events: ReturnType<typeof generateDataset>['events']) => {
@@ -44,6 +44,12 @@ describe('deterministic dataset generation', () => {
   it('produces exact, intentionally bounded profile sizes', () => {
     expect(generateDataset({ profile: 'test' }).eventCount).toBe(320)
     expect(generateDataset({ profile: 'development' }).eventCount).toBe(10_000)
+    expect(datasetProfiles.large.eventCount).toBe(100_000)
+    expect(datasetProfiles.showcase.eventCount).toBe(1_000_000)
+  })
+
+  it('preserves the established development content fingerprint after streaming refactor', () => {
+    expect(generateDataset({ profile: 'development' }).fingerprint).toBe('es2-b50844cc')
   })
 })
 

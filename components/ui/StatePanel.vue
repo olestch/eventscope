@@ -11,6 +11,7 @@ defineProps<{
   <section
     class="state-panel"
     :class="`state-panel--${state}`"
+    :role="state === 'error' ? 'alert' : 'status'"
     :aria-live="state === 'loading' ? 'polite' : undefined"
   >
     <span class="state-panel__icon" aria-hidden="true">{{

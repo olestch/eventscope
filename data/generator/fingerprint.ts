@@ -1,12 +1,11 @@
 import type { EventDataset, EventRecord } from '~/domain/events/models'
 
-function hashText(value: string): string {
-  let hash = 2166136261
+function updateHash(hash: number, value: string): number {
   for (let index = 0; index < value.length; index += 1) {
     hash ^= value.charCodeAt(index)
     hash = Math.imul(hash, 16777619)
   }
-  return (hash >>> 0).toString(16).padStart(8, '0')
+  return hash
 }
 
 const serializeEvent = (event: EventRecord) =>
@@ -43,5 +42,11 @@ export function fingerprintDataset(
     dataset.referencePeriod.start,
     dataset.referencePeriod.end
   ].join('|')
-  return `es2-${hashText(`${header}\n${dataset.events.map(serializeEvent).join('\n')}`)}`
+  let hash = updateHash(2166136261, header)
+  hash = updateHash(hash, '\n')
+  for (let index = 0; index < dataset.events.length; index += 1) {
+    if (index) hash = updateHash(hash, '\n')
+    hash = updateHash(hash, serializeEvent(dataset.events[index]!))
+  }
+  return `es2-${(hash >>> 0).toString(16).padStart(8, '0')}`
 }

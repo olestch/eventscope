@@ -134,39 +134,49 @@ function selectPlacement(
   return { channelId, asset, qrCode, location }
 }
 
+export function generateSessionBlueprint(
+  index: number,
+  populationSize: number,
+  catalog: ReferenceCatalog,
+  scenario: ScenarioDefinition,
+  streams: SessionStreams
+): SessionBlueprint {
+  const campaign = chooseCampaign(catalog, streams.traffic)
+  const placement = selectPlacement(campaign, catalog, scenario, streams.traffic)
+  const sourceId = placement.asset.sourceId
+  const dimensions = chooseDevice(streams.dimensions)
+  const country = placement.location
+    ? catalog.countries.find(({ code }) => code === placement.location!.countryCode)!
+    : streams.dimensions.weightedPick(
+        catalog.countries,
+        (value) => ({ US: 0.62, CA: 0.14, GB: 0.13, DE: 0.11 })[value.code] ?? 0.1
+      )
+  const region = placement.location?.region ?? streams.dimensions.pick(country.regions)
+  const visitorBucket = streams.sessions.integer(1, Math.max(40, Math.floor(populationSize * 0.72)))
+
+  return {
+    sessionId: `ses-${String(index + 1).padStart(6, '0')}`,
+    visitorId: `vis-${String(visitorBucket).padStart(6, '0')}`,
+    startedAtMs: chooseTimestamp(campaign, scenario, streams.traffic),
+    campaign,
+    channelId: placement.channelId,
+    sourceId,
+    asset: placement.asset,
+    qrCode: placement.qrCode,
+    ...(placement.location ? { location: placement.location } : {}),
+    ...dimensions,
+    countryCode: country.code,
+    region
+  }
+}
+
 export function generateSessionBlueprints(
   count: number,
   catalog: ReferenceCatalog,
   scenario: ScenarioDefinition,
   streams: SessionStreams
 ): SessionBlueprint[] {
-  return Array.from({ length: count }, (_, index) => {
-    const campaign = chooseCampaign(catalog, streams.traffic)
-    const placement = selectPlacement(campaign, catalog, scenario, streams.traffic)
-    const sourceId = placement.asset.sourceId
-    const dimensions = chooseDevice(streams.dimensions)
-    const country = placement.location
-      ? catalog.countries.find(({ code }) => code === placement.location!.countryCode)!
-      : streams.dimensions.weightedPick(
-          catalog.countries,
-          (value) => ({ US: 0.62, CA: 0.14, GB: 0.13, DE: 0.11 })[value.code] ?? 0.1
-        )
-    const region = placement.location?.region ?? streams.dimensions.pick(country.regions)
-    const visitorBucket = streams.sessions.integer(1, Math.max(40, Math.floor(count * 0.72)))
-
-    return {
-      sessionId: `ses-${String(index + 1).padStart(6, '0')}`,
-      visitorId: `vis-${String(visitorBucket).padStart(6, '0')}`,
-      startedAtMs: chooseTimestamp(campaign, scenario, streams.traffic),
-      campaign,
-      channelId: placement.channelId,
-      sourceId,
-      asset: placement.asset,
-      qrCode: placement.qrCode,
-      ...(placement.location ? { location: placement.location } : {}),
-      ...dimensions,
-      countryCode: country.code,
-      region
-    }
-  })
+  return Array.from({ length: count }, (_, index) =>
+    generateSessionBlueprint(index, count, catalog, scenario, streams)
+  )
 }

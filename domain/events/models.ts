@@ -52,7 +52,7 @@ export interface EventRecord {
   readonly region: string
 }
 
-export type DatasetProfile = 'test' | 'development'
+export type DatasetProfile = 'test' | 'development' | 'large' | 'showcase'
 
 export interface ReferenceCatalog {
   campaigns: import('~/domain/campaigns/models').Campaign[]

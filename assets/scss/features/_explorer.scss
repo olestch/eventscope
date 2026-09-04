@@ -1,3 +1,60 @@
+.worker-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(15, 33, 49, 0.72);
+}
+.worker-toolbar__label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--slate-500);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.profile-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.profile-switch button {
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--slate-300);
+  cursor: pointer;
+}
+.profile-switch button:hover,
+.profile-switch button:focus-visible,
+.profile-switch__button--active {
+  border-color: rgba(94, 234, 212, 0.45) !important;
+  background: rgba(94, 234, 212, 0.08) !important;
+  color: var(--mint) !important;
+}
+.worker-toolbar .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.async-status {
+  min-height: 1.35rem;
+  margin: 0 0 12px;
+  color: var(--slate-300);
+  font-size: 0.78rem;
+}
+.results-shell {
+  transition: opacity 160ms ease;
+}
+.results-shell--pending {
+  opacity: 0.72;
+}
+
 .context-strip {
   display: grid;
   grid-template-columns: 1.3fr 1fr 1fr 1.25fr auto;

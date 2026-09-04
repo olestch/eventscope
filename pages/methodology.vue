@@ -4,23 +4,23 @@ useHead({ title: 'Methodology' })
 const principles = [
   {
     number: '01',
-    title: 'Source facts stay immutable',
-    text: 'A seeded, versioned generator produces events across the fixed UTC reference period. Analytical queries derive results without mutating or decorating those source facts.'
+    title: 'Semantics remain the reference',
+    text: 'The readable Phase 3 engine remains the oracle for UTC ranges, exact distinct counts, conversion eligibility, buckets, funnels and comparisons. Differential tests guard the optimized path.'
   },
   {
     number: '02',
-    title: 'Semantics before speed',
-    text: 'The pure TypeScript engine uses straightforward scans and exact Sets for 10,000 events. Filters, distinct counts, conversion eligibility and UTC bucket boundaries are independently tested.'
+    title: 'Storage follows evidence',
+    text: 'Measured object scans became expensive at 100K and 1M. Runtime execution therefore uses dictionary-coded typed columns while public domain events remain readable.'
   },
   {
     number: '03',
-    title: 'Comparable raw results',
-    text: 'Summary, breakdown, time-series, funnel and comparison results contain raw numbers, normalized queries and dataset fingerprint metadata—not formatted presentation strings.'
+    title: 'Heavy work stays isolated',
+    text: 'A dedicated Worker owns deterministic generation, integrity validation, analytical storage and queries. Vue receives only progress, metadata and typed results.'
   },
   {
     number: '04',
     title: 'Honest product boundaries',
-    text: 'Explorer summary and timeline values are now real analytical results. Workers, indexes, caches, chart libraries and million-event datasets remain explicitly deferred.'
+    text: 'Explorer defaults to 100K because measured 1M initialization is perceptible. The real 1M profile remains explicitly selectable; benchmark figures are local diagnostics, not universal claims.'
   }
 ]
 </script>
@@ -29,13 +29,13 @@ const principles = [
     <PageHeader
       eyebrow="Methodology"
       title="A product shell with explicit evidence boundaries."
-      description="How Phase 3 turns deterministic source facts into reproducible analytical results."
+      description="How Phase 4 scales deterministic analytics without changing their meaning."
     />
     <section class="methodology-hero">
       <p class="methodology-hero__quote">
         “A useful analytical product makes the limits of its evidence as legible as the signal.”
       </p>
-      <div><span>Phase</span><strong>03 · Analytics Core</strong></div>
+      <div><span>Phase</span><strong>04 · Worker execution</strong></div>
     </section>
     <section class="principle-list">
       <article v-for="principle in principles" :key="principle.number">
@@ -55,18 +55,18 @@ const principles = [
         <div>
           <h3>Implemented now</h3>
           <ul>
-            <li>Pure summary and categorical breakdowns</li>
-            <li>UTC time series with semantic buckets</li>
-            <li>Ordered session funnels and comparisons</li>
-            <li>Real Explorer metrics from the 10K dataset</li>
+            <li>Deterministic 320, 10K, 100K and 1M profiles</li>
+            <li>Columnar runtime equivalent to the reference engine</li>
+            <li>Typed Worker lifecycle and logical supersession</li>
+            <li>Async Explorer with 100K default and 1M showcase</li>
           </ul>
         </div>
         <div>
           <h3>Deliberately deferred</h3>
           <ul>
-            <li>Web Worker and async execution protocol</li>
-            <li>Indexes, typed storage and query cache</li>
-            <li>Million-event generation and benchmarks</li>
+            <li>Full cross-filter Explorer interactions</li>
+            <li>Universal indexes, preaggregations and query cache</li>
+            <li>SharedArrayBuffer or multi-worker execution</li>
             <li>Real QR generation or export</li>
             <li>PDF and presentation generation</li>
           </ul>

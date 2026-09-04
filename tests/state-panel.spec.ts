@@ -9,5 +9,6 @@ describe('reusable data states', () => {
     })
     expect(wrapper.classes()).toContain(`state-panel--${state}`)
     expect(wrapper.text()).toContain(`${state} title`)
+    expect(wrapper.attributes('role')).toBe(state === 'error' ? 'alert' : 'status')
   })
 })
