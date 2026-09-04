@@ -3,6 +3,10 @@
 EventScope keeps domain meaning separate from runtime execution:
 
 ```text
+Explorer route + committed query
+        ↓
+Analytics Gateway
+        ↓
 Deterministic EventDataset semantics
         ↓
 Phase 3 reference Analytics Core
@@ -13,12 +17,38 @@ Equivalent runtime Analytics Core
         ↓
 Web Worker adapter + typed protocol
         ↓
-Async client
+Worker-backed gateway implementation
         ↓
 Vue presentation
 ```
 
 Both engines apply the same UTC half-open ranges (`[start, end)`), filter rules, exact distinct counts, conversion eligibility, breakdown ordering, time buckets, funnels and comparisons. Small-fixture differential tests keep the readable reference engine as the semantic oracle.
+
+## Gateway and deployment boundary
+
+The Explorer depends on the promise-based `AnalyticsGateway` contract. Dataset initialization, queries and typed results cross that boundary; presentation components do not know about `postMessage`, correlation IDs or Worker protocol messages.
+
+The portfolio/demo deployment is intentionally self-contained:
+
+```text
+Vue Explorer → Analytics Gateway → Web Worker → columnar runtime → local deterministic dataset
+```
+
+A production-oriented deployment can keep the UI contract and replace its implementation:
+
+```text
+Vue Explorer → Analytics Gateway → HTTP Analytics API → backend analytics service → event store / warehouse
+```
+
+The local Worker demonstrates main-thread isolation, typed asynchronous communication, stale-response protection and large-data execution. It is not a recommendation to ship one million raw event records to browsers in a production analytics SaaS.
+
+## Explorer query and visualization boundary
+
+The URL owns committed Explorer state: profile, inclusive UTC dates, campaign/channel/location/device filters, breakdown and measure. A separate draft state changes only when the user applies it. Parsing validates catalog IDs, clamps dates to the fixed reference period, removes duplicates and serializes arrays in stable order. The inclusive UI end date is converted to the Analytics Core's exclusive next-day boundary.
+
+One Explorer coordinator issues summary, adaptive time-series and breakdown requests for a monotonically increasing query generation. It publishes only a complete result set from the current generation. Previous complete results may remain visible with an explicit pending label, but partial generations are never combined.
+
+Aggregated results are converted into immutable timeline and breakdown view models. Direct modular Apache ECharts renders a canvas line chart and horizontal bars; semantic HTML tables contain the same exact values. ECharts owns no analytical aggregation or filtering. The selected modules provide responsive resizing, precise tooltips and a future path to Phase 6 interactions without a Vue-specific wrapper; the Apache-2.0 license is compatible with the repository.
 
 ## Storage decision
 

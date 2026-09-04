@@ -4,23 +4,23 @@ useHead({ title: 'Methodology' })
 const principles = [
   {
     number: '01',
-    title: 'Semantics remain the reference',
-    text: 'The readable Phase 3 engine remains the oracle for UTC ranges, exact distinct counts, conversion eligibility, buckets, funnels and comparisons. Differential tests guard the optimized path.'
+    title: 'The route owns the question',
+    text: 'Draft filters become analytical state only after Apply. Committed UTC dates, dimensions, breakdown and dataset profile serialize into one canonical, reloadable URL.'
   },
   {
     number: '02',
-    title: 'Storage follows evidence',
-    text: 'Measured object scans became expensive at 100K and 1M. Runtime execution therefore uses dictionary-coded typed columns while public domain events remain readable.'
+    title: 'Results publish together',
+    text: 'Summary, timeline and breakdown share one query generation. The Explorer may retain the previous complete result while pending, but it never combines partial generations.'
   },
   {
     number: '03',
-    title: 'Heavy work stays isolated',
-    text: 'A dedicated Worker owns deterministic generation, integrity validation, analytical storage and queries. Vue receives only progress, metadata and typed results.'
+    title: 'Charts present, not calculate',
+    text: 'Pure view-model builders map immutable analytical results to direct modular ECharts options and equivalent semantic tables. Aggregation remains behind the Analytics Gateway.'
   },
   {
     number: '04',
-    title: 'Honest product boundaries',
-    text: 'Explorer defaults to 100K because measured 1M initialization is perceptible. The real 1M profile remains explicitly selectable; benchmark figures are local diagnostics, not universal claims.'
+    title: 'The demo boundary is explicit',
+    text: 'The self-contained portfolio uses a Worker-backed gateway. A production product could use an HTTP analytics service and warehouse without changing the Explorer contract.'
   }
 ]
 </script>
@@ -29,13 +29,13 @@ const principles = [
     <PageHeader
       eyebrow="Methodology"
       title="A product shell with explicit evidence boundaries."
-      description="How Phase 4 scales deterministic analytics without changing their meaning."
+      description="How Phase 5 turns a stable analytics engine into a shareable, accessible product surface."
     />
     <section class="methodology-hero">
       <p class="methodology-hero__quote">
         “A useful analytical product makes the limits of its evidence as legible as the signal.”
       </p>
-      <div><span>Phase</span><strong>04 · Worker execution</strong></div>
+      <div><span>Phase</span><strong>05 · Interactive Explorer</strong></div>
     </section>
     <section class="principle-list">
       <article v-for="principle in principles" :key="principle.number">
@@ -55,18 +55,18 @@ const principles = [
         <div>
           <h3>Implemented now</h3>
           <ul>
-            <li>Deterministic 320, 10K, 100K and 1M profiles</li>
-            <li>Columnar runtime equivalent to the reference engine</li>
-            <li>Typed Worker lifecycle and logical supersession</li>
-            <li>Async Explorer with 100K default and 1M showcase</li>
+            <li>Canonical route-backed filters and UTC date presets</li>
+            <li>Interactive event timeline and ranked breakdown</li>
+            <li>Accessible exact-value tables for every chart</li>
+            <li>100K default and explicit 1M showcase</li>
           </ul>
         </div>
         <div>
           <h3>Deliberately deferred</h3>
           <ul>
-            <li>Full cross-filter Explorer interactions</li>
-            <li>Universal indexes, preaggregations and query cache</li>
-            <li>SharedArrayBuffer or multi-worker execution</li>
+            <li>Cross-filter, brush and saved-view interactions</li>
+            <li>Funnel, heatmap and advanced comparison UI</li>
+            <li>Anomaly detection and map visualization</li>
             <li>Real QR generation or export</li>
             <li>PDF and presentation generation</li>
           </ul>

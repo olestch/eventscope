@@ -16,10 +16,11 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run",
-    "benchmark:analytics": "vitest run --config vitest.baseline.config.ts --disableConsoleIntercept"
+    "test": "vitest run --configLoader runner",
+    "benchmark:analytics": "vitest run --config vitest.baseline.config.ts --configLoader runner --disableConsoleIntercept"
   },
   "dependencies": {
+    "echarts": "6.1.0",
     "nuxt": "3.21.11",
     "vue": "^3.5.42",
     "vue-router": "^4.6.4"

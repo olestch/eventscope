@@ -3,25 +3,30 @@ import { eventDatasetProvider } from '~/data/provider/eventDatasetProvider'
 import type {
   AnalyticsQuery,
   BreakdownResult,
+  ComparisonResult,
+  FunnelDefinition,
+  FunnelResult,
   SummaryResult,
   TimeSeriesResult
 } from '~/domain/analytics/contracts'
 import type { DatasetProfile } from '~/domain/events/models'
-import {
-  createBrowserAnalyticsClient,
-  WorkerProtocolError,
-  WorkerRuntimeError
-} from '~/services/analytics/AnalyticsWorkerClient'
+import { createBrowserAnalyticsClient } from '~/services/analytics/AnalyticsWorkerClient'
 import type { AnalyticsWorkerClient } from '~/services/analytics/AnalyticsWorkerClient'
-import type { RuntimeDatasetMetadata, WorkerProgressStage } from '~/workers/analyticsProtocol'
+import {
+  AnalyticsGatewayProtocolError,
+  AnalyticsGatewayRuntimeError,
+  type AnalyticsDatasetMetadata
+} from '~/services/analytics/AnalyticsGateway'
+import type { WorkerProgressStage } from '~/workers/analyticsProtocol'
 
 type AnalyticsResourceStatus = 'idle' | 'generating' | 'ready' | 'error'
+export type AnalyticsPreparationStage = 'preparing' | 'generating' | 'optimizing'
 
 interface AnalyticsResourceState {
   status: AnalyticsResourceStatus
   requestedProfile: DatasetProfile
-  progressStage?: WorkerProgressStage
-  metadata?: RuntimeDatasetMetadata
+  progressStage?: AnalyticsPreparationStage
+  metadata?: AnalyticsDatasetMetadata
   error?: string
 }
 
@@ -32,23 +37,29 @@ const state = reactive<AnalyticsResourceState>({
 let client: AnalyticsWorkerClient | undefined
 let initializationToken = 0
 let currentInitialization:
-  { profile: DatasetProfile; promise: Promise<RuntimeDatasetMetadata> } | undefined
+  { profile: DatasetProfile; promise: Promise<AnalyticsDatasetMetadata> } | undefined
+
+const preparationStage: Record<WorkerProgressStage, AnalyticsPreparationStage> = {
+  preparing_catalog: 'preparing',
+  generating_events: 'generating',
+  preparing_analytics_storage: 'optimizing'
+}
 
 function getClient(): AnalyticsWorkerClient {
   if (!client) {
     client = createBrowserAnalyticsClient()
     client.onProgress((stage) => {
-      if (state.status === 'generating') state.progressStage = stage
+      if (state.status === 'generating') state.progressStage = preparationStage[stage]
     })
   }
   return client
 }
 
-async function initializeProfile(profile: DatasetProfile): Promise<RuntimeDatasetMetadata> {
+async function initializeProfile(profile: DatasetProfile): Promise<AnalyticsDatasetMetadata> {
   const token = ++initializationToken
   state.status = 'generating'
   state.requestedProfile = profile
-  state.progressStage = 'preparing_catalog'
+  state.progressStage = 'preparing'
   state.error = undefined
   try {
     const metadata = await getClient().initialize(profile)
@@ -68,7 +79,7 @@ async function initializeProfile(profile: DatasetProfile): Promise<RuntimeDatase
   }
 }
 
-function initialize(profile: DatasetProfile): Promise<RuntimeDatasetMetadata> {
+function initialize(profile: DatasetProfile): Promise<AnalyticsDatasetMetadata> {
   if (state.status === 'ready' && state.metadata?.profile === profile) {
     return Promise.resolve(state.metadata)
   }
@@ -88,7 +99,10 @@ async function execute<Result>(operation: () => Promise<Result>): Promise<Result
   try {
     return await operation()
   } catch (error) {
-    if (error instanceof WorkerRuntimeError || error instanceof WorkerProtocolError) {
+    if (
+      error instanceof AnalyticsGatewayRuntimeError ||
+      error instanceof AnalyticsGatewayProtocolError
+    ) {
       state.status = 'error'
       state.error = error.message
     }
@@ -106,6 +120,11 @@ export function useEventAnalytics() {
     breakdown: (query: AnalyticsQuery): Promise<BreakdownResult> =>
       execute(() => getClient().breakdown(query)),
     timeSeries: (query: AnalyticsQuery): Promise<TimeSeriesResult> =>
-      execute(() => getClient().timeSeries(query))
+      execute(() => getClient().timeSeries(query)),
+    funnel: (query: AnalyticsQuery, definition: FunnelDefinition): Promise<FunnelResult> =>
+      execute(() => getClient().funnel(query, definition)),
+    compareSummary: (query: AnalyticsQuery): Promise<ComparisonResult> =>
+      execute(() => getClient().compareSummary(query)),
+    reset: (): Promise<void> => execute(() => getClient().reset())
   }
 }

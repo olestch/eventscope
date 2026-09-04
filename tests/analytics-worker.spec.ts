@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createAnalyticsFixture, fixtureRange } from '~/tests/analytics-fixture'
+import { AnalyticsWorkerClient, type WorkerTransport } from '~/services/analytics/AnalyticsWorkerClient'
 import {
-  AnalyticsWorkerClient,
-  SupersededRequestError,
-  WorkerRuntimeError,
-  type WorkerTransport
-} from '~/services/analytics/AnalyticsWorkerClient'
+  AnalyticsGatewayRuntimeError,
+  SupersededAnalyticsRequestError
+} from '~/services/analytics/AnalyticsGateway'
 import { createAnalyticsWorkerHandler } from '~/workers/analyticsWorkerHandler'
 import type {
   AnalyticsWorkerRequest,
@@ -150,7 +149,7 @@ describe('Analytics Worker client', () => {
       result: { kind: 'summary', values: { events: 1 }, metadata: {} }
     })
 
-    expect(await firstOutcome).toBeInstanceOf(SupersededRequestError)
+    expect(await firstOutcome).toBeInstanceOf(SupersededAnalyticsRequestError)
     await expect(second).resolves.toMatchObject({ values: { events: 2 } })
   })
 
@@ -163,7 +162,7 @@ describe('Analytics Worker client', () => {
     const initializeRequest = worker.sent.at(-1)!
     worker.respond({ requestId: initializeRequest.requestId, type: 'initialized', metadata })
 
-    expect(await queryOutcome).toBeInstanceOf(SupersededRequestError)
+    expect(await queryOutcome).toBeInstanceOf(SupersededAnalyticsRequestError)
     await expect(initialization).resolves.toEqual(metadata)
   })
 
@@ -174,7 +173,7 @@ describe('Analytics Worker client', () => {
     const pending = client.summary({ ...summaryQuery, measures: ['events'] })
     const activeWorker = workers[0]!
     activeWorker.fail('runtime failed')
-    await expect(pending).rejects.toBeInstanceOf(WorkerRuntimeError)
+    await expect(pending).rejects.toBeInstanceOf(AnalyticsGatewayRuntimeError)
 
     const recovered = client.initialize('test')
     const replacement = workers[1]!

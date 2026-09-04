@@ -8,18 +8,9 @@ import type {
   TimeSeriesResult
 } from '~/domain/analytics/contracts'
 import type { DatasetProfile } from '~/domain/events/models'
-import type { TimeRange } from '~/domain/shared/primitives'
+import type { AnalyticsDatasetMetadata } from '~/services/analytics/AnalyticsGateway'
 
-export interface RuntimeDatasetMetadata {
-  datasetId: string
-  fingerprint: string
-  profile: DatasetProfile
-  eventCount: number
-  referencePeriod: TimeRange
-  analyticalStorageBytes: number
-  generationMs: number
-  compilationMs: number
-}
+export type RuntimeDatasetMetadata = AnalyticsDatasetMetadata
 
 export type WorkerProgressStage =
   'preparing_catalog' | 'generating_events' | 'preparing_analytics_storage'

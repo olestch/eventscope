@@ -4,22 +4,24 @@ EventScope is a portfolio product concept for exploring event engagement, organi
 
 ## Current status
 
-Phase 4 adds a large-dataset execution layer behind the stable Phase 3 analytical semantics:
+Phase 5 turns the Explorer into a focused interactive analytics surface:
 
-- deterministic 320, 10K, 100K and 1M dataset profiles using one scenario model;
-- a dictionary-encoded columnar runtime with equivalent summary, breakdown, time-series, funnel and comparison results;
-- generation, storage and analytical execution inside a dedicated browser Worker;
-- a typed asynchronous protocol with correlation IDs, logical supersession and failure recovery;
-- benchmark-driven storage evidence without CI timing thresholds or marketing claims;
-- scenario-level assertions at 10K, 100K and the local 1M benchmark scale.
+- committed campaign, channel, location, device and UTC date filters serialized into shareable URLs;
+- separate draft filters with deliberate Apply and Reset actions;
+- a dominant Apache ECharts event/QR timeline and ranked categorical breakdown;
+- exact semantic table alternatives for every chart;
+- coherent asynchronous publication of summary, timeline and breakdown results;
+- the existing 100K default and explicit 1M showcase profiles.
 
-Explorer defaults to the measured 100K profile and exposes an honest 1M showcase option. Existing results stay visible while a new query/profile is pending. QR-library scan cards remain presentation-only examples and are isolated accordingly.
+Browser Back/Forward and direct URL reload restore the committed query. Existing complete results remain visibly marked while a newer query is pending; partial result generations are never mixed. QR-library scan cards remain presentation-only examples and are isolated accordingly.
 
 ## Architecture boundaries
 
 Nuxt runs in client-rendered mode (`ssr: false`) because EventScope is a data-intensive application shell without server-owned data or an SEO requirement. No server functionality exists solely to justify the framework.
 
-Readable event records remain the domain/correctness model. Runtime execution compiles dedicated typed columns inside the Worker; numeric encodings never reach Vue. No universal indexes, cache, `SharedArrayBuffer`, server functionality or third-party data engine was added.
+Vue depends on an `AnalyticsGateway`, not Worker protocol details. In this self-contained portfolio demo the gateway uses the Phase 4 Worker, columnar runtime and deterministic local dataset. A production implementation could provide the same boundary through an HTTP analytics API and backend event store; sending one million source events to a browser is not presented as a production SaaS recommendation.
+
+Charts use direct modular Apache ECharts 6 integration—line/bar, tooltip, grid, legend and canvas modules only. Analytics results are mapped into immutable presentation models before chart options are built; no aggregation happens in the visualization layer. No universal indexes, cache, `SharedArrayBuffer`, backend or server-owned analytics were added.
 
 See [Analytics Core](docs/analytics-core.md) for the execution boundary and measure semantics.
 
@@ -50,7 +52,7 @@ CI runs the same application quality gates on pushes and pull requests to `main`
 
 ## Roadmap
 
-Phase 5 can expand Explorer interaction and visualization while reusing the Worker execution boundary established here.
+Phase 6 can add cross-filtering, funnel/heatmap exploration and richer comparison workflows while reusing the route, gateway and visualization boundaries established here.
 
 ## Provenance
 

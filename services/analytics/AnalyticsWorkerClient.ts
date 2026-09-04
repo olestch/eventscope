@@ -8,6 +8,12 @@ import type {
   TimeSeriesResult
 } from '~/domain/analytics/contracts'
 import type { DatasetProfile } from '~/domain/events/models'
+import {
+  AnalyticsGatewayProtocolError,
+  AnalyticsGatewayRuntimeError,
+  SupersededAnalyticsRequestError,
+  type AnalyticsGateway
+} from '~/services/analytics/AnalyticsGateway'
 import type {
   AnalyticsWorkerRequest,
   AnalyticsWorkerResponse,
@@ -35,19 +41,7 @@ interface PendingRequest {
   reject(reason: unknown): void
 }
 
-export class SupersededRequestError extends Error {
-  override readonly name = 'SupersededRequestError'
-}
-
-export class WorkerProtocolError extends Error {
-  override readonly name = 'WorkerProtocolError'
-}
-
-export class WorkerRuntimeError extends Error {
-  override readonly name = 'WorkerRuntimeError'
-}
-
-export class AnalyticsWorkerClient {
+export class AnalyticsWorkerClient implements AnalyticsGateway {
   private worker: WorkerTransport
   private nextRequestId = 1
   private readonly pending = new Map<number, PendingRequest>()
@@ -64,7 +58,7 @@ export class AnalyticsWorkerClient {
       typeof (response as { type?: unknown }).type !== 'string'
     ) {
       this.failed = true
-      this.failAll(new WorkerProtocolError('Analytics Worker returned a malformed response.'))
+      this.failAll(new AnalyticsGatewayProtocolError('Analytics runtime returned a malformed response.'))
       return
     }
     const message = response as AnalyticsWorkerResponse
@@ -86,7 +80,7 @@ export class AnalyticsWorkerClient {
     }
     if (message.type !== pending.expectedType) {
       this.failed = true
-      const error = new WorkerProtocolError(
+      const error = new AnalyticsGatewayProtocolError(
         `Expected ${pending.expectedType}, received ${message.type} for request ${message.requestId}.`
       )
       pending.reject(error)
@@ -100,7 +94,7 @@ export class AnalyticsWorkerClient {
 
   private readonly handleError = (event: ErrorEvent) => {
     this.failed = true
-    this.failAll(new WorkerRuntimeError(event.message || 'Analytics Worker failed.'))
+    this.failAll(new AnalyticsGatewayRuntimeError(event.message || 'Analytics runtime failed.'))
   }
 
   constructor(private readonly workerFactory: () => WorkerTransport) {
@@ -139,7 +133,7 @@ export class AnalyticsWorkerClient {
     const previousId = this.latestByFamily.get(request.type)
     if (previousId !== undefined) {
       const previous = this.pending.get(previousId)
-      previous?.reject(new SupersededRequestError(`${request.type} request was superseded.`))
+      previous?.reject(new SupersededAnalyticsRequestError(`${request.type} request was superseded.`))
       this.pending.delete(previousId)
     }
 
@@ -162,7 +156,7 @@ export class AnalyticsWorkerClient {
   }
 
   initialize(profile: DatasetProfile): Promise<RuntimeDatasetMetadata> {
-    this.failAll(new SupersededRequestError('Dataset initialization changed.'))
+    this.failAll(new SupersededAnalyticsRequestError('Dataset initialization changed.'))
     if (this.failed) this.restartWorker()
     return this.send({ type: 'initialize', profile }, 'initialized')
   }
@@ -188,13 +182,13 @@ export class AnalyticsWorkerClient {
   }
 
   reset(): Promise<void> {
-    this.failAll(new SupersededRequestError('Analytics Worker was reset.'))
+    this.failAll(new SupersededAnalyticsRequestError('Analytics runtime was reset.'))
     if (this.failed) this.restartWorker()
     return this.send({ type: 'reset' }, 'reset_complete')
   }
 
   dispose(): void {
-    this.failAll(new SupersededRequestError('Analytics Worker client was disposed.'))
+    this.failAll(new SupersededAnalyticsRequestError('Analytics gateway was disposed.'))
     this.disconnect()
     this.worker.terminate()
   }

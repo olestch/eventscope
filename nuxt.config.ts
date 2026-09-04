@@ -21,5 +21,19 @@ export default defineNuxtConfig({
   },
   typescript: {
     typeCheck: true
+  },
+  vite: {
+    // ECharts is loaded lazily by the Explorer. Serving its modular entrypoints
+    // directly also avoids an unnecessary development-only prebundle.
+    optimizeDeps: {
+      exclude: [
+        'echarts',
+        'echarts/core',
+        'echarts/charts',
+        'echarts/components',
+        'echarts/renderers',
+        'zrender'
+      ]
+    }
   }
 })
