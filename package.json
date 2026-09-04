@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "benchmark:analytics": "vitest run --config vitest.baseline.config.ts --disableConsoleIntercept"
   },
   "dependencies": {
     "nuxt": "3.21.11",

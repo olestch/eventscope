@@ -3,16 +3,77 @@ import FilterChips from '~/components/explore/FilterChips.vue'
 import TimelineMock from '~/components/explore/TimelineMock.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
 import StatusBadge from '~/components/ui/StatusBadge.vue'
-import { eventDatasetProvider } from '~/data/provider/eventDatasetProvider'
-import { phaseOneExplorerSnapshot as explorerSnapshot } from '~/data/presentation/phaseOneSnapshot'
+import { useEventAnalytics } from '~/composables/useEventAnalytics'
 
 useHead({ title: 'Explore' })
-const catalog = eventDatasetProvider.getCatalog()
-const dataset = eventDatasetProvider.getDataset('development')
-const campaign = catalog.campaigns.find((item) => item.id === explorerSnapshot.campaignId)!
-const locations = campaign.locationIds.map((id) =>
-  catalog.locations.find((location) => location.id === id)!
+const { dataset, catalog, analytics } = useEventAnalytics('development')
+const campaignId = 'cmp-northstar'
+const campaign = catalog.campaigns.find(({ id }) => id === campaignId)!
+const range = { start: campaign.period.start, end: '2026-03-19T00:00:00.000Z' }
+const baseQuery = { range, campaignIds: [campaignId] }
+
+const summary = analytics.summary({
+  ...baseQuery,
+  measures: ['events', 'sessions', 'conversions', 'conversion_rate', 'qr_scans']
+})
+const series = analytics.timeSeries({
+  ...baseQuery,
+  measures: ['events', 'qr_scans'],
+  bucket: { kind: 'fixed', size: '1d' }
+})
+const locationBreakdown = analytics.breakdown({
+  ...baseQuery,
+  measures: ['sessions'],
+  breakdown: 'location'
+})
+
+const formatInteger = (value = 0) => value.toLocaleString('en-US')
+const metrics = [
+  {
+    label: 'Source events',
+    value: formatInteger(summary.values.events),
+    note: 'Immutable facts',
+    tone: 'neutral' as const
+  },
+  {
+    label: 'Unique sessions',
+    value: formatInteger(summary.values.sessions),
+    note: 'Exact IDs',
+    tone: 'positive' as const
+  },
+  {
+    label: 'QR scans',
+    value: formatInteger(summary.values.qr_scans),
+    note: 'Scan events',
+    tone: 'positive' as const
+  },
+  {
+    label: 'Conversion rate',
+    value: `${((summary.values.conversion_rate ?? 0) * 100).toFixed(1)}%`,
+    note: `${formatInteger(summary.values.conversions)} sessions`,
+    tone: 'draft' as const
+  }
+]
+
+const dateLabel = new Intl.DateTimeFormat('en', {
+  day: '2-digit',
+  month: 'short',
+  timeZone: 'UTC'
+})
+const timeline = series.points.map((point) => ({
+  label: dateLabel.format(new Date(point.range.start)),
+  events: point.values.events ?? 0,
+  qrScans: point.values.qr_scans ?? 0
+}))
+const locationSessions = locationBreakdown.rows.reduce(
+  (total, row) => total + (row.values.sessions ?? 0),
+  0
 )
+const locations = locationBreakdown.rows.map((row) => ({
+  location: catalog.locations.find(({ id }) => id === row.key)!,
+  share: locationSessions ? Math.round(((row.values.sessions ?? 0) / locationSessions) * 100) : 0
+}))
+const filters = [campaign.name, 'All locations', 'Daily', 'UTC']
 </script>
 
 <template>
@@ -33,55 +94,56 @@ const locations = campaign.locationIds.map((id) =>
       <div>
         <span>Campaign</span><strong>{{ campaign.name }}</strong>
       </div>
-      <div>
-        <span>Date range</span><strong>{{ explorerSnapshot.period }}</strong>
-      </div>
+      <div><span>Date range</span><strong>04–18 Mar 2026</strong></div>
       <div><span>Breakdown</span><strong>Daily · Location</strong></div>
-      <div>
-        <span>Comparison</span><strong>{{ explorerSnapshot.previousPeriod }}</strong>
-      </div>
+      <div><span>Engine</span><strong>Pure scan · UTC</strong></div>
       <StatusBadge :label="`${dataset.eventCount.toLocaleString('en-US')} source events`" tone="draft" />
     </section>
-    <FilterChips :filters="explorerSnapshot.filters" />
+    <FilterChips :filters="filters" />
 
     <section class="metric-grid" aria-label="Campaign summary">
-      <article v-for="metric in explorerSnapshot.metrics" :key="metric.label" class="metric-card">
+      <article v-for="metric in metrics" :key="metric.label" class="metric-card">
         <div class="metric-card__top">
           <span>{{ metric.label }}</span
           ><span aria-hidden="true">↗</span>
         </div>
         <strong>{{ metric.value }}</strong
-        ><StatusBadge :label="metric.change" :tone="metric.tone" />
+        ><StatusBadge :label="metric.note" :tone="metric.tone" />
       </article>
     </section>
 
-    <TimelineMock :points="explorerSnapshot.timeline" />
+    <TimelineMock :points="timeline" />
 
     <section class="analysis-grid">
       <article class="panel insight-panel">
         <div class="insight-panel__label">
-          <span class="pulse-icon" aria-hidden="true">✦</span><span>Analyst note</span>
+          <span class="pulse-icon" aria-hidden="true">✦</span><span>Analytical result</span>
         </div>
-        <h2>Harbor momentum leads the period</h2>
-        <p>{{ explorerSnapshot.insight }}</p>
-        <div class="confidence-line"><span>Context confidence</span><strong>Directional</strong></div>
+        <h2>Generated facts now drive this view</h2>
+        <p>
+          The summary, timeline and location contribution are calculated by the pure Analytics Core from
+          the deterministic development dataset. Scenario rules remain synthetic and directional.
+        </p>
+        <div class="confidence-line">
+          <span>Dataset fingerprint</span><strong>{{ dataset.fingerprint }}</strong>
+        </div>
       </article>
       <article class="panel location-panel">
         <div class="section-heading">
           <div>
             <p class="eyebrow">Location context</p>
-            <h2>Contribution snapshot</h2>
+            <h2>Session contribution</h2>
           </div>
           <NuxtLink to="/qr">Open QR studio</NuxtLink>
         </div>
         <ol class="location-list">
-          <li v-for="(location, index) in locations" :key="location.id">
+          <li v-for="({ location, share }, index) in locations" :key="location.id">
             <span class="location-rank">0{{ index + 1 }}</span>
             <div>
               <strong>{{ location.name }}</strong
               ><small>{{ location.city }} · {{ location.region }}</small>
             </div>
-            <span>{{ [44, 33, 23][index] }}%</span>
+            <span>{{ share }}%</span>
           </li>
         </ol>
       </article>

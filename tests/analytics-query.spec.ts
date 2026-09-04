@@ -9,13 +9,19 @@ describe('analytics query normalization', () => {
     const normalized = normalizeAnalyticsQuery({
       range,
       campaignIds: ['cmp-northstar', 'cmp-aurora', 'cmp-northstar'],
+      sourceIds: ['source-b', 'source-a', 'source-b'],
+      assetIds: ['asset-b', 'asset-a'],
       eventTypes: ['conversion', 'page_view', 'conversion'],
-      measures: ['sessions', 'events', 'sessions']
+      measures: ['sessions', 'events', 'sessions'],
+      bucket: { kind: 'adaptive', maxPoints: 42 }
     })
 
     expect(normalized.campaignIds).toEqual(['cmp-aurora', 'cmp-northstar'])
     expect(normalized.eventTypes).toEqual(['conversion', 'page_view'])
+    expect(normalized.sourceIds).toEqual(['source-a', 'source-b'])
+    expect(normalized.assetIds).toEqual(['asset-a', 'asset-b'])
     expect(normalized.measures).toEqual(['events', 'sessions'])
+    expect(normalized.bucket).toEqual({ kind: 'adaptive', maxPoints: 42 })
   })
 
   it('removes empty optional filters', () => {

@@ -4,22 +4,24 @@ EventScope is a portfolio product concept for exploring event engagement, organi
 
 ## Current status
 
-Phase 2 establishes the source-data semantics behind the Nuxt 3 application shell:
+Phase 3 adds a real, framework-independent Analytics Core behind the Nuxt 3 application shell:
 
-- explicit campaign, channel, source, location, asset, QR, event, report, and analytics contract modules;
-- an inspectable reference catalog with six campaigns and 36 tracked assets;
-- seeded, versioned synthetic session journeys in fixed UTC time;
-- exact profiles of 320 test events and 10,000 development events;
-- deterministic fingerprints and structured integrity validation;
-- tested scenario patterns for launch traffic, location strength, device conversion friction, channel quality, and time distribution.
+- deterministic filtering across every source-backed event dimension;
+- exact event, session, visitor, conversion, conversion-rate, and QR-scan measures;
+- categorical breakdowns, continuous UTC time buckets, ordered session funnels, and period comparisons;
+- stable normalized queries, result metadata, and typed request errors;
+- the seeded 320-event test and 10,000-event development profiles from Phase 2;
+- scenario-level assertions proving launch, location, device, and channel stories through real queries.
 
-The Explorer reads catalog and dataset metadata through a provider boundary. Its displayed metrics and SVG timeline remain a clearly named Phase 1 presentation snapshot until the Analytics Core exists; Vue components do not perform ad hoc aggregation.
+The Explorer reads its summary, daily timeline, and location contribution from the Analytics Core through a small composable adapter. QR-library scan cards remain presentation-only examples and are isolated accordingly.
 
 ## Architecture boundaries
 
 Nuxt runs in client-rendered mode (`ssr: false`) because EventScope is a data-intensive application shell without server-owned data or an SEO requirement. No server functionality exists solely to justify the framework.
 
-Phase 2 deliberately uses readable in-memory event records and pure deterministic functions. Analytics execution, aggregation, Web Workers, typed-array storage, indexes, caches, chart libraries, real QR rendering, exports, backend services, and million-event benchmarks are deferred.
+The engine deliberately uses readable event scans and exact `Set` operations. Web Workers, typed-array storage, indexes, caches, chart libraries, real QR rendering, exports, backend services, and million-event datasets are deferred.
+
+See [Analytics Core](docs/analytics-core.md) for the execution boundary and measure semantics.
 
 ## Local development
 
@@ -39,11 +41,13 @@ npm run build
 git diff --check
 ```
 
+Run `npm run benchmark:analytics` for a local 10K diagnostic baseline. It has no CI timing threshold and is not a product-performance claim.
+
 CI runs the same application quality gates on pushes and pull requests to `main`.
 
 ## Roadmap
 
-The next phase can implement Analytics Core execution against the stable query/result contracts. Storage and worker optimizations remain later, benchmark-driven work.
+Phase 4 can benchmark and optimize storage/execution internals without changing the analytical semantics established here.
 
 ## Provenance
 
