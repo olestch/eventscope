@@ -19,8 +19,13 @@ const principles = [
   },
   {
     number: '04',
+    title: 'Studio output stays local',
+    text: 'QR Studio validates and renders one deterministic SVG, then exports it directly or rasterizes it to PNG. It never claims to persist an asset, create a redirect or record a scan.'
+  },
+  {
+    number: '05',
     title: 'The demo boundary is explicit',
-    text: 'The self-contained portfolio uses a Worker-backed gateway. A production product could use an HTTP analytics service and warehouse without changing the Explorer contract.'
+    text: 'The self-contained portfolio uses a Worker-backed analytics gateway and a local QR editor. Production services could replace those edges without moving business rules into Vue.'
   }
 ]
 </script>
@@ -29,13 +34,13 @@ const principles = [
     <PageHeader
       eyebrow="Methodology"
       title="A product shell with explicit evidence boundaries."
-      description="How Phase 6B connects observation, route-backed interaction, comparison, funnel and temporal exploration."
+      description="How EventScope separates analytics evidence, local QR design and future production services."
     />
     <section class="methodology-hero">
       <p class="methodology-hero__quote">
         “A useful analytical product makes the limits of its evidence as legible as the signal.”
       </p>
-      <div><span>Phase</span><strong>06B · Temporal behavior</strong></div>
+      <div><span>Phase</span><strong>07 · QR Studio</strong></div>
     </section>
     <section class="principle-list">
       <article v-for="principle in principles" :key="principle.number">
@@ -62,6 +67,8 @@ const principles = [
             <li>Thresholded deterministic temporal insights</li>
             <li>Accessible equivalent actions and exact-value tables</li>
             <li>100K default and explicit 1M showcase</li>
+            <li>Matrix-backed QR Studio with SVG and PNG export</li>
+            <li>Typed URL, contrast, quiet-zone and logo validation</li>
           </ul>
         </div>
         <div>
@@ -70,7 +77,7 @@ const principles = [
             <li>Recurring weekday/hour filters and chart brushing</li>
             <li>Custom comparison ranges and saved views</li>
             <li>Anomaly detection and map visualization</li>
-            <li>Real QR generation or export</li>
+            <li>Tracked redirects, persistence and QR analytics integration</li>
             <li>PDF and presentation generation</li>
           </ul>
         </div>

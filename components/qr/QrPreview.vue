@@ -6,7 +6,7 @@ defineProps<{ accent?: string }>()
   <div
     class="qr-preview"
     :style="{ '--qr-accent': accent || '#5eead4' }"
-    aria-label="Decorative QR placeholder preview"
+    aria-label="QR asset library thumbnail"
   >
     <div class="qr-preview__grid" aria-hidden="true">
       <span
@@ -20,6 +20,6 @@ defineProps<{ accent?: string }>()
         }"
       />
     </div>
-    <span class="sr-only">QR generation is not implemented in Phase 1.</span>
+    <span class="sr-only">Presentation thumbnail. Open the asset to use QR Studio.</span>
   </div>
 </template>

@@ -7,8 +7,8 @@ useHead({ title: 'New QR asset' })
   <div class="page">
     <PageHeader
       eyebrow="QR studio / New asset"
-      title="Shape a trackable touchpoint."
-      description="Define the content and visual direction. Generation and export are deliberately deferred."
+      title="Design a campaign touchpoint."
+      description="Configure campaign context, validate readability and export a production-ready visual asset locally."
       ><template #actions
         ><NuxtLink class="button button--ghost" to="/qr">Cancel</NuxtLink></template
       ></PageHeader

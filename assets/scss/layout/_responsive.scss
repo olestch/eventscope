@@ -40,6 +40,13 @@
   .asset-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  .qr-studio-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(330px, 0.82fr);
+  }
+  .qr-metadata-grid,
+  .qr-gradient-controls {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 760px) {
@@ -258,8 +265,27 @@
     width: 100%;
   }
   .preview-panel,
-  .builder-summary {
+  .builder-summary,
+  .qr-preview-panel {
     position: static;
+  }
+  .qr-studio-grid {
+    display: flex;
+    flex-direction: column;
+  }
+  .qr-preview-panel {
+    order: -1;
+    width: 100%;
+  }
+  .qr-config-panel {
+    width: 100%;
+  }
+  .qr-choice-grid,
+  .qr-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .qr-canvas {
+    width: min(100%, 360px);
   }
   .report-card {
     grid-template-columns: 60px minmax(0, 1fr);
@@ -321,6 +347,14 @@
   }
   .report-card {
     grid-template-columns: 1fr;
+  }
+  .qr-color-group,
+  .qr-context-list,
+  .qr-export-actions {
+    grid-template-columns: 1fr;
+  }
+  .qr-export-actions .button--ghost {
+    grid-column: auto;
   }
   .report-card__index {
     width: 100%;

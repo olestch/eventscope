@@ -4,7 +4,16 @@ EventScope is a portfolio product concept for exploring event engagement, organi
 
 ## Current status
 
-Phase 6B deepens the focused Explorer into a visualization-led analytical workflow:
+Phase 7 adds a production-quality, frontend-owned QR Studio beside the analytical Explorer:
+
+- typed campaign context and visual configuration kept separate from historical QR facts;
+- absolute HTTPS destination validation and immediate matrix-backed SVG preview;
+- square, rounded and dot modules with restrained finder, color, gradient and logo controls;
+- deterministic contrast, quiet-zone and logo-coverage guidance;
+- SVG export from the canonical preview and 1024 × 1024 client-side PNG rasterization;
+- explicit local-only editor semantics with no fake persistence or tracking service.
+
+The Explorer continues to provide:
 
 - committed campaign, channel, location, device and UTC date filters serialized into shareable URLs;
 - separate draft filters with deliberate Apply and Reset actions;
@@ -18,7 +27,7 @@ Phase 6B deepens the focused Explorer into a visualization-led analytical workfl
 - coherent asynchronous publication of summary, timeline and breakdown results;
 - the existing 100K default and explicit 1M showcase profiles.
 
-Browser Back/Forward and direct URL reload restore the committed query. Existing complete results remain visibly marked while a newer query is pending; partial result generations are never mixed. QR-library scan cards remain presentation-only examples and are isolated accordingly.
+Browser Back/Forward and direct URL reload restore the committed query. Existing complete results remain visibly marked while a newer query is pending; partial result generations are never mixed. QR-library scan cards remain presentation-only examples; Studio editing and export never mutate the deterministic analytics dataset.
 
 ## Architecture boundaries
 
@@ -29,6 +38,7 @@ Vue depends on an `AnalyticsGateway`, not Worker protocol details. In this self-
 Charts use direct modular Apache ECharts 6 integration—line/bar/heatmap, tooltip, grid, visual scale, legend and canvas modules only. Analytics results are mapped into immutable presentation models before chart options are built; no aggregation happens in the visualization layer. The heatmap is one lazy Gateway/Worker operation that returns all 168 cells. Its small insight rule set is deterministic and thresholded; it is not ML, statistical significance or anomaly detection. No universal indexes, cache, `SharedArrayBuffer`, backend or server-owned analytics were added.
 
 See [Analytics Core](docs/analytics-core.md) for the execution boundary and measure semantics.
+See [QR Studio](docs/qr-studio.md) for rendering, validation, export and production boundaries.
 
 ## Local development
 
@@ -57,7 +67,7 @@ CI runs the same application quality gates on pushes and pull requests to `main`
 
 ## Roadmap
 
-Anomaly detection, recurring weekday/hour filters, custom comparison ranges, saved views, QR Studio and Reports remain separate later concerns.
+QR-to-analytics drilldown, tracked redirect creation, persistence, Reports, anomaly detection, recurring weekday/hour filters and saved views remain separate later concerns.
 
 ## Provenance
 

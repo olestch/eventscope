@@ -13,11 +13,11 @@ useHead({ title: asset?.name || 'QR asset' })
       ><PageHeader
         eyebrow="QR studio / Asset detail"
         :title="asset.name"
-        description="Review placement context and the future export setup for this asset."
+        description="Use this historical campaign definition as a local Studio draft. Analytics facts remain unchanged."
         ><template #actions
           ><NuxtLink class="button button--ghost" to="/qr">Back to library</NuxtLink></template
         ></PageHeader
-      ><QrEditorShell mode="edit" :name="asset.name" :destination="asset.destination" /></template
+      ><QrEditorShell :asset="asset" /></template
     ><StatePanel
       v-else
       state="error"

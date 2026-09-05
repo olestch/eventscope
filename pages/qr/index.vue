@@ -25,7 +25,7 @@ const statusLabel = (status: (typeof qrAssets)[number]['status']) =>
       description="Organize trackable destination concepts for the Northstar Launch story."
       ><template #actions
         ><NuxtLink class="button button--primary" to="/qr/new"
-          >New QR asset <span aria-hidden="true">+</span></NuxtLink
+          >Open Studio <span aria-hidden="true">+</span></NuxtLink
         ></template
       ></PageHeader
     >
