@@ -37,7 +37,8 @@
   .temporal-insight-list {
     grid-template-columns: 1fr;
   }
-  .asset-grid {
+  .asset-grid,
+  .qr-library-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   .qr-studio-grid {
@@ -187,6 +188,7 @@
   .metric-grid,
   .analysis-grid,
   .asset-grid,
+  .qr-library-grid,
   .studio-grid,
   .builder-grid,
   .scope-table {

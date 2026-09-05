@@ -1,7 +1,8 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import QrEditorShell from '~/components/qr/QrEditorShell.vue'
 import { qrDesignConstraints } from '~/domain/qr/constraints'
+import type { QrRepository, SavedQrCode } from '~/domain/qr/library'
 
 describe('QR Studio UI', () => {
   it('starts with a valid Northstar preview and enabled exports', () => {
@@ -10,7 +11,8 @@ describe('QR Studio UI', () => {
     expect(wrapper.text()).toContain('Harbor Hall')
     expect(wrapper.text()).toContain('Good configuration')
     expect(wrapper.get('.qr-canvas img').attributes('src')).toContain('data:image/svg+xml')
-    expect(wrapper.get('button[type="button"].button--primary').attributes('disabled')).toBeUndefined()
+    expect(wrapper.findAll('.qr-export-actions button')[1]!.attributes('disabled')).toBeUndefined()
+    expect(wrapper.get('.qr-save-button').attributes('disabled')).toBeDefined()
   })
 
   it('keeps the editor usable and disables exports for an invalid destination', async () => {
@@ -20,7 +22,7 @@ describe('QR Studio UI', () => {
     expect(destination.attributes('aria-invalid')).toBe('true')
     expect(wrapper.text()).toContain('The destination must use HTTPS.')
     expect(wrapper.text()).toContain('Preview paused')
-    const exports = wrapper.findAll('.qr-export-actions button').slice(0, 2)
+    const exports = wrapper.findAll('.qr-export-actions button').slice(1, 3)
     expect(exports.every((button) => button.attributes('disabled') !== undefined)).toBe(true)
   })
 
@@ -73,5 +75,34 @@ describe('QR Studio UI', () => {
     await glyph.setValue(' N ')
     expect(glyph.attributes('aria-invalid')).toBe('false')
     expect(wrapper.get('.qr-canvas img').attributes('src')).toContain('data:image/svg+xml')
+  })
+
+  it('saves through the repository boundary and clears the dirty state', async () => {
+    let created: SavedQrCode | undefined
+    const repository: QrRepository = {
+      list: async () => [],
+      get: async () => null,
+      create: async (input) =>
+        (created = {
+          id: 'saved-1',
+          ...input,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z'
+        }),
+      update: async () => {
+        throw new Error('unexpected update')
+      },
+      duplicate: async () => {
+        throw new Error('unexpected duplicate')
+      },
+      delete: async () => undefined
+    }
+    const wrapper = mount(QrEditorShell, { props: { repository } })
+    expect(wrapper.text()).toContain('Unsaved changes')
+    await wrapper.get('.qr-save-button').trigger('click')
+    await flushPromises()
+    expect(created?.name).toBe('Northstar Harbor invitation')
+    expect(wrapper.text()).toContain('Saved in this browser')
+    expect(wrapper.emitted('saved')?.[0]?.[0]).toMatchObject({ id: 'saved-1' })
   })
 })

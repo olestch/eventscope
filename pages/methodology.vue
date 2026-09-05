@@ -20,7 +20,7 @@ const principles = [
   {
     number: '04',
     title: 'Studio output stays local',
-    text: 'QR Studio validates and renders one deterministic SVG, then exports it directly or rasterizes it to PNG. It never claims to persist an asset, create a redirect or record a scan.'
+    text: 'QR Studio validates and renders one deterministic SVG, then stores configuration behind a typed browser-local repository. It never claims cloud durability, a redirect or a recorded scan.'
   },
   {
     number: '05',
@@ -40,7 +40,7 @@ const principles = [
       <p class="methodology-hero__quote">
         “A useful analytical product makes the limits of its evidence as legible as the signal.”
       </p>
-      <div><span>Phase</span><strong>07 · QR Studio</strong></div>
+      <div><span>Phase</span><strong>07.5 · QR Library</strong></div>
     </section>
     <section class="principle-list">
       <article v-for="principle in principles" :key="principle.number">
@@ -69,6 +69,7 @@ const principles = [
             <li>100K default and explicit 1M showcase</li>
             <li>Matrix-backed QR Studio with SVG and PNG export</li>
             <li>Typed URL, contrast, quiet-zone and logo validation</li>
+            <li>Versioned browser-local QR repository and saved-asset CRUD</li>
           </ul>
         </div>
         <div>
@@ -77,7 +78,7 @@ const principles = [
             <li>Recurring weekday/hour filters and chart brushing</li>
             <li>Custom comparison ranges and saved views</li>
             <li>Anomaly detection and map visualization</li>
-            <li>Tracked redirects, persistence and QR analytics integration</li>
+            <li>Tracked redirects, cloud persistence and QR analytics integration</li>
             <li>PDF and presentation generation</li>
           </ul>
         </div>

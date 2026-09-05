@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import QrEditorShell from '~/components/qr/QrEditorShell.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
+import type { SavedQrCode } from '~/domain/qr/library'
+import { createBrowserQrRepository } from '~/services/qr/LocalStorageQrRepository'
 useHead({ title: 'New QR asset' })
+const repository = createBrowserQrRepository()
+const handleSaved = (saved: SavedQrCode) =>
+  navigateTo(`/qr/${encodeURIComponent(saved.id)}`, { replace: true })
 </script>
 <template>
   <div class="page">
@@ -12,6 +17,6 @@ useHead({ title: 'New QR asset' })
       ><template #actions
         ><NuxtLink class="button button--ghost" to="/qr">Cancel</NuxtLink></template
       ></PageHeader
-    ><QrEditorShell />
+    ><QrEditorShell :repository="repository" @saved="handleSaved" />
   </div>
 </template>

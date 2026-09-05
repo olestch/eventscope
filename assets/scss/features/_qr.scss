@@ -97,7 +97,6 @@
   font-size: 0.7rem;
 }
 .qr-preview {
-  --qr-accent: var(--mint);
   display: grid;
   width: 142px;
   height: 142px;
@@ -107,18 +106,93 @@
   background: var(--paper);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
 }
-.qr-preview__grid {
-  display: grid;
+.qr-preview img {
+  display: block;
   width: 100%;
   height: 100%;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
 }
-.qr-preview__grid span {
-  border-radius: 1px;
+.qr-library-note,
+.qr-library-message {
+  margin: 0 0 20px;
+  color: var(--slate-500);
+  font-size: 0.76rem;
 }
-.qr-preview__grid .filled {
-  background: var(--qr-accent);
+.qr-library-message {
+  color: var(--mint);
+}
+.qr-library-message.is-error {
+  color: var(--coral);
+}
+.qr-library-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.saved-qr-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--ink-900);
+}
+.saved-qr-card__preview {
+  display: grid;
+  min-height: 205px;
+  place-items: center;
+  background: radial-gradient(circle, rgba(94, 234, 212, 0.12), transparent 65%), var(--ink-850);
+}
+.saved-qr-card__body {
+  display: grid;
+  gap: 10px;
+  padding: 21px;
+}
+.saved-qr-card__body h2,
+.saved-qr-card__body p {
+  margin: 0;
+}
+.saved-qr-card__body > p {
+  color: var(--slate-300);
+  font-size: 0.76rem;
+}
+.saved-qr-card__body .saved-qr-card__updated {
+  color: var(--slate-500);
+  font-size: 0.66rem;
+}
+.saved-qr-card__destination {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.saved-qr-card__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+.saved-qr-card__actions .button--ghost {
+  grid-column: 1 / -1;
+}
+.saved-qr-card__confirmation {
+  display: grid;
+  gap: 9px;
+  margin-top: 4px;
+  border: 1px solid rgba(255, 128, 102, 0.35);
+  border-radius: 10px;
+  padding: 13px;
+  background: var(--ink-850);
+}
+.saved-qr-card__confirmation span {
+  color: var(--slate-500);
+  font-size: 0.7rem;
+}
+.saved-qr-card__confirmation > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.saved-qr-card__confirmation .button--danger {
+  border-color: rgba(255, 128, 102, 0.45);
+  background: rgba(255, 128, 102, 0.12);
+  color: var(--coral);
 }
 .studio-grid {
   display: grid;
@@ -569,6 +643,35 @@
   color: var(--slate-300);
   font-size: 0.7rem;
   line-height: 1.5;
+}
+.qr-persistence-status {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  justify-self: stretch;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: left;
+}
+.qr-persistence-status > span {
+  grid-row: 1 / 3;
+  width: 8px;
+  height: 8px;
+  align-self: center;
+  border-radius: 50%;
+  background: var(--mint);
+}
+.qr-persistence-status.is-error > span {
+  background: var(--coral);
+}
+.qr-persistence-status strong {
+  color: var(--paper);
+  font-size: 0.72rem;
+}
+.qr-persistence-status small {
+  color: var(--slate-500);
+  font-size: 0.62rem;
 }
 .qr-certification-note,
 .qr-export-note {

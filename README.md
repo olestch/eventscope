@@ -4,14 +4,16 @@ EventScope is a portfolio product concept for exploring event engagement, organi
 
 ## Current status
 
-Phase 7 adds a production-quality, frontend-owned QR Studio beside the analytical Explorer:
+Phase 7.5 adds a browser-local QR Library to the production-quality, frontend-owned QR Studio:
 
 - typed campaign context and visual configuration kept separate from historical QR facts;
 - absolute HTTPS destination validation and immediate matrix-backed SVG preview;
 - square, rounded and dot modules with restrained finder, color, gradient and logo controls;
 - deterministic contrast, quiet-zone and logo-coverage guidance;
 - SVG export from the canonical preview and 1024 × 1024 client-side PNG rasterization;
-- explicit local-only editor semantics with no fake persistence or tracking service.
+- create, reopen, update, duplicate, export and confirmed-delete workflows behind a typed `QrRepository`;
+- a versioned, defensively validated `LocalStorageQrRepository` with explicit local-only semantics;
+- clean separation between user-saved QR codes and immutable scenario QR definitions.
 
 The Explorer continues to provide:
 
@@ -27,7 +29,7 @@ The Explorer continues to provide:
 - coherent asynchronous publication of summary, timeline and breakdown results;
 - the existing 100K default and explicit 1M showcase profiles.
 
-Browser Back/Forward and direct URL reload restore the committed query. Existing complete results remain visibly marked while a newer query is pending; partial result generations are never mixed. QR-library scan cards remain presentation-only examples; Studio editing and export never mutate the deterministic analytics dataset.
+Browser Back/Forward and direct URL reload restore the committed query. Existing complete results remain visibly marked while a newer query is pending; partial result generations are never mixed. Saved QR assets contain configuration only: Studio editing and persistence never mutate the deterministic analytics dataset or claim scan analytics.
 
 ## Architecture boundaries
 
@@ -67,7 +69,7 @@ CI runs the same application quality gates on pushes and pull requests to `main`
 
 ## Roadmap
 
-QR-to-analytics drilldown, tracked redirect creation, persistence, Reports, anomaly detection, recurring weekday/hour filters and saved views remain separate later concerns.
+QR-to-analytics drilldown, tracked redirect creation, cloud persistence, Reports, anomaly detection, recurring weekday/hour filters and saved views remain separate later concerns.
 
 ## Provenance
 

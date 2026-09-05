@@ -2,9 +2,17 @@
 
 ## Boundary
 
-Phase 7 is a local editor and export surface. `QrStudioDraft` is intentionally separate from the scenario's immutable `QRCodeDefinition`; changing a campaign, destination or design never adds or rewrites analytical events. The stable draft identity and campaign/channel/location IDs leave a clean seam for a later QR ID → AnalyticsQuery connection, but Phase 7 does not implement that connection.
+Phase 7.5 adds a browser-local library to the editor and export surface. `SavedQrCode` and `QrStudioDraft` remain intentionally separate from the scenario's immutable `QRCodeDefinition`; creating, updating, duplicating or deleting a saved QR never adds or rewrites analytical events. The stable saved identity and campaign/channel/location IDs leave a clean seam for a later QR ID → AnalyticsQuery connection, but this phase does not implement that connection.
 
-In a production system the frontend would own visual configuration, preview, local guidance and explicit export actions. A backend would normally own authorization, persistence, tracked short-URL creation, redirect resolution and scan/event ingestion. EventScope encodes the configured HTTPS destination directly and does not pretend to create a tracked redirect.
+In a production system the frontend would own visual configuration, preview, local guidance and explicit export actions. A backend would normally own authorization, durable shared persistence, tracked short-URL creation, redirect resolution and scan/event ingestion. EventScope stores configuration in the current browser only, encodes the configured HTTPS destination directly and does not pretend to create a tracked redirect.
+
+## Local persistence boundary
+
+Vue depends on the async `QrRepository` interface. `LocalStorageQrRepository` is one adapter with a versioned `eventscope:qr-library` envelope. Reads parse unknown data defensively, discard malformed individual records and treat corrupt or unsupported envelopes as an empty local library. Browser read/write failures surface as typed repository errors instead of optimistic success.
+
+New IDs come from Web Crypto UUIDs, not timestamps. Records include `createdAt` and `updatedAt` ISO timestamps and are listed by newest update with a deterministic ID tie-break. Creation and updates reuse the same domain validation as preview; mapping functions explicitly copy every editable design field. Dirty comparison fingerprints editable configuration only, excluding IDs and timestamps. A successful first save replaces the route with `/qr/:id`; later saves update that same identity. The editor warns on browser unload while dirty. This is intentionally not cross-tab synchronization or protection against every client-side route transition.
+
+Library thumbnails and SVG/PNG actions call the same `buildQrArtifact` and browser export functions as Studio. No alternate renderer exists.
 
 ## Rendering pipeline
 
@@ -33,7 +41,7 @@ Invalid drafts leave every editor control available but pause preview generation
 ## Deliberately deferred
 
 - backend redirect and URL-shortening services;
-- persistence, authentication and saved-asset CRUD;
+- cloud persistence, authentication and multi-user asset sharing;
 - QR analytics integration and scan ingestion;
 - remote or uploaded logos;
 - camera scanning, batch generation and dynamic redirects;

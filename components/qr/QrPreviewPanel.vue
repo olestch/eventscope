@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { QrStudioDraft, QrSvgArtifact, QrValidationResult } from '~/domain/qr/models'
-import type { QrExportState } from '~/composables/useQrStudio'
+import type { QrExportState, QrSaveState } from '~/composables/useQrStudio'
 import { qrQualityLabels } from '~/features/qr/presentation'
 
 defineProps<{
@@ -8,10 +8,14 @@ defineProps<{
   artifact?: QrSvgArtifact
   validation: QrValidationResult
   context: { campaign: string; channel: string; location: string }
+  dirty: boolean
+  canSave: boolean
+  saveState: QrSaveState
+  saveMessage: string
   exportState: QrExportState
   exportMessage: string
 }>()
-defineEmits<{ exportSvg: []; exportPng: []; resetDesign: [] }>()
+defineEmits<{ save: []; exportSvg: []; exportPng: []; resetDesign: [] }>()
 </script>
 
 <template>
@@ -24,6 +28,18 @@ defineEmits<{ exportSvg: []; exportPng: []; resetDesign: [] }>()
       <span class="qr-quality-pill" :class="`qr-quality-pill--${validation.status}`">
         {{ qrQualityLabels[validation.status] }}
       </span>
+    </div>
+
+    <div
+      class="qr-persistence-status"
+      :class="{ 'is-error': saveState === 'error' }"
+      :role="saveState === 'error' ? 'alert' : 'status'"
+    >
+      <span aria-hidden="true" />
+      <strong>{{
+        saveState === 'saving' ? 'Saving locally…' : dirty ? 'Unsaved changes' : 'Saved in this browser'
+      }}</strong>
+      <small>Local browser storage only</small>
     </div>
 
     <div class="qr-canvas" :class="{ 'qr-canvas--invalid': !artifact }">
@@ -80,6 +96,14 @@ defineEmits<{ exportSvg: []; exportPng: []; resetDesign: [] }>()
 
     <div class="qr-export-actions">
       <button
+        class="button button--primary qr-save-button"
+        type="button"
+        :disabled="!canSave"
+        @click="$emit('save')"
+      >
+        {{ saveState === 'saving' ? 'Saving…' : 'Save QR' }}
+      </button>
+      <button
         class="button button--secondary"
         type="button"
         :disabled="!artifact || exportState === 'exporting'"
@@ -88,7 +112,7 @@ defineEmits<{ exportSvg: []; exportPng: []; resetDesign: [] }>()
         Export SVG
       </button>
       <button
-        class="button button--primary"
+        class="button button--secondary"
         type="button"
         :disabled="!artifact || exportState === 'exporting'"
         @click="$emit('exportPng')"
@@ -99,7 +123,15 @@ defineEmits<{ exportSvg: []; exportPng: []; resetDesign: [] }>()
         Reset design
       </button>
     </div>
-    <p class="qr-export-note">Exports happen locally. Nothing is uploaded or saved.</p>
+    <p class="qr-export-note">Saved and exported locally. Nothing is uploaded.</p>
+    <p
+      v-if="saveMessage"
+      class="qr-export-status"
+      :class="{ 'is-error': saveState === 'error' }"
+      :role="saveState === 'error' ? 'alert' : 'status'"
+    >
+      {{ saveMessage }}
+    </p>
     <p
       v-if="exportMessage"
       class="qr-export-status"

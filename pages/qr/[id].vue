@@ -1,29 +1,53 @@
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
 import QrEditorShell from '~/components/qr/QrEditorShell.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
 import StatePanel from '~/components/ui/StatePanel.vue'
-import { eventDatasetProvider } from '~/data/provider/eventDatasetProvider'
+import type { SavedQrCode } from '~/domain/qr/library'
+import { createBrowserQrRepository } from '~/services/qr/LocalStorageQrRepository'
+
 const route = useRoute()
-const asset = eventDatasetProvider.getCatalog().qrCodes.find(({ id }) => id === String(route.params.id))
-useHead({ title: asset?.name || 'QR asset' })
+const repository = createBrowserQrRepository()
+const saved = ref<SavedQrCode>()
+const loading = ref(true)
+const error = ref('')
+const title = computed(() => saved.value?.name || 'Saved QR asset')
+useHead({ title })
+
+onMounted(async () => {
+  try {
+    saved.value = (await repository.get(String(route.params.id))) ?? undefined
+    if (!saved.value) error.value = 'This QR is not saved in this browser.'
+  } catch (caught) {
+    error.value = caught instanceof Error ? caught.message : 'The QR could not be loaded.'
+  } finally {
+    loading.value = false
+  }
+})
 </script>
+
 <template>
   <div class="page">
-    <template v-if="asset"
-      ><PageHeader
-        eyebrow="QR studio / Asset detail"
-        :title="asset.name"
-        description="Use this historical campaign definition as a local Studio draft. Analytics facts remain unchanged."
-        ><template #actions
+    <StatePanel
+      v-if="loading"
+      state="loading"
+      title="Loading saved QR"
+      description="Reading this asset from local browser storage."
+    />
+    <template v-else-if="saved">
+      <PageHeader
+        eyebrow="QR studio / Saved asset"
+        :title="saved.name"
+        description="Edit and export this browser-local QR. Analytics scenario data remains separate."
+      >
+        <template #actions
           ><NuxtLink class="button button--ghost" to="/qr">Back to library</NuxtLink></template
-        ></PageHeader
-      ><QrEditorShell :asset="asset" /></template
-    ><StatePanel
-      v-else
-      state="error"
-      title="QR asset not found"
-      description="This identifier is not part of the fictional Northstar dataset."
-      ><NuxtLink class="button button--primary" to="/qr">Return to library</NuxtLink></StatePanel
-    >
+        >
+      </PageHeader>
+      <QrEditorShell :repository="repository" :saved="saved" @saved="saved = $event" />
+    </template>
+    <StatePanel v-else state="error" title="QR asset unavailable" :description="error">
+      <NuxtLink class="button button--primary" to="/qr">Return to library</NuxtLink>
+    </StatePanel>
   </div>
 </template>
