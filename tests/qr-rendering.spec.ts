@@ -45,6 +45,10 @@ describe('QR matrix and canonical SVG renderer', () => {
     expect(svg).toContain(`viewBox="0 0 ${matrix.size + 8} ${matrix.size + 8}"`)
     expect(svg).toContain('rx="1.15"')
     expect(svg).toContain('<g aria-hidden="true" data-center-mark="true"')
+    expect(svg).toContain('data-center-badge=')
+    expect(svg).toContain('data-center-glyph="eventscope"')
+    expect(svg).toMatch(/data-center-badge="[^"]+"[^>]+fill="#f3f5f2"[^>]+stroke="url\(#qr-gradient-/)
+    expect(svg).toContain('stroke-width="0.28"')
   })
 
   it('uses stable IDs and produces byte-identical SVG output', () => {
@@ -88,17 +92,38 @@ describe('QR matrix and canonical SVG renderer', () => {
     expect(svg).not.toMatch(/clip-path|<clipPath|<mask/i)
   })
 
-  it('keeps mark, plate and knockout separate and scales the geometry predictably', () => {
+  it('centers glyph, content, badge and module-aligned knockout geometry', () => {
     const small = calculateCenterMarkGeometry(41, 0.12)
     const large = calculateCenterMarkGeometry(41, 0.2)
+    const centeredAt = (rectangle: { x: number; size: number }) => rectangle.x + rectangle.size / 2
 
-    expect(small.mark.size).toBeLessThan(small.plate.size)
-    expect(small.plate.size).toBeLessThan(small.knockout.size)
-    expect(small.plate.x).toBeLessThan(small.mark.x)
-    expect(small.knockout.x).toBeLessThan(small.plate.x)
-    expect(small.mark.size).toBe(5)
-    expect(large.mark.size).toBeCloseTo(41 * 0.2)
-    expect(large.knockout.size - small.knockout.size).toBeCloseTo(large.mark.size - small.mark.size)
+    expect(small.glyph.size).toBeLessThan(small.content.size)
+    expect(small.content.size).toBeLessThan(small.badge.size)
+    expect(small.badge.size).toBeLessThan(small.knockout.size)
+    expect([small.glyph, small.content, small.badge, small.knockout].map(centeredAt)).toEqual([
+      20.5, 20.5, 20.5, 20.5
+    ])
+    expect((small.knockout.size - small.badge.size) / 2).toBe(1)
+    expect(small.badge.size).toBe(5)
+    expect(large.badge.size).toBeCloseTo(41 * 0.2)
+    expect(large.knockout.size - small.knockout.size).toBeCloseTo(large.badge.size - small.badge.size)
+  })
+
+  it('renders a trimmed and escaped custom glyph at the exact badge center', () => {
+    const draft = createDraft()
+    draft.design.logo.content = { type: 'glyph', value: ' < ' }
+    const matrix = encodeQrMatrix(draft.destination)
+    const geometry = calculateCenterMarkGeometry(matrix.size, draft.design.logo.size)
+    const svg = renderQrSvg(matrix, draft)
+    const center = draft.design.margin + matrix.size / 2
+
+    expect(svg).toContain('data-center-content="glyph"')
+    expect(svg).toContain('data-center-glyph="custom"')
+    expect(svg).toContain('x="' + center + '" y="' + center + '"')
+    expect(svg).toContain('>&lt;</text>')
+    expect(svg).not.toContain('> < </text>')
+    expect(geometry.glyph.x + geometry.glyph.size / 2).toBe(matrix.size / 2)
+    expect(renderQrSvg(matrix, draft)).toBe(svg)
   })
 
   it('uses the corrected canonical SVG as the preview data URI', () => {

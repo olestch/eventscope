@@ -1,6 +1,18 @@
-import type { QrStudioDraft, QrValidationIssue, QrValidationResult } from '~/domain/qr/models'
+import type {
+  QrCenterMarkContent,
+  QrStudioDraft,
+  QrValidationIssue,
+  QrValidationResult
+} from '~/domain/qr/models'
+import { centerMarkGraphemes, qrDesignConstraints } from '~/domain/qr/constraints'
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i
+
+function isCenterMarkContent(value: unknown): value is QrCenterMarkContent {
+  if (!value || typeof value !== 'object' || !('type' in value)) return false
+  if (value.type === 'eventscope') return true
+  return value.type === 'glyph' && 'value' in value && typeof value.value === 'string'
+}
 
 function colorChannels(color: string): [number, number, number] | undefined {
   if (!HEX_COLOR.test(color)) return undefined
@@ -142,36 +154,73 @@ export function validateQrDefinition(definition: QrStudioDraft): QrValidationRes
     })
   }
 
-  if (definition.design.margin < 2) {
+  if (definition.design.margin < qrDesignConstraints.margin.min) {
     issues.push({
       code: 'quiet_zone_missing',
       severity: 'error',
       field: 'margin',
-      message: 'Use at least 2 modules of clear space around the code.'
+      message: `Use at least ${qrDesignConstraints.margin.min} modules of clear space around the code.`
     })
-  } else if (definition.design.margin < 4) {
+  } else if (definition.design.margin < qrDesignConstraints.margin.recommended) {
     issues.push({
       code: 'quiet_zone_caution',
       severity: 'warning',
       field: 'margin',
-      message: 'A 4-module quiet zone is recommended.'
+      message: `A ${qrDesignConstraints.margin.recommended}-module quiet zone is recommended.`
     })
   }
 
-  if (definition.design.logo.enabled && definition.design.logo.size > 0.2) {
-    issues.push({
-      code: 'logo_too_large',
-      severity: 'error',
-      field: 'logo',
-      message: 'Reduce the center mark to 20% or less of the code width.'
-    })
-  } else if (definition.design.logo.enabled && definition.design.logo.size > 0.17) {
-    issues.push({
-      code: 'logo_size_caution',
-      severity: 'warning',
-      field: 'logo',
-      message: 'The center mark covers more modules than the recommended default.'
-    })
+  if (definition.design.logo.enabled) {
+    const size = definition.design.logo.size
+    if (size < qrDesignConstraints.centerMark.size.min) {
+      issues.push({
+        code: 'logo_too_small',
+        severity: 'error',
+        field: 'logo',
+        message: `Use a center mark of at least ${qrDesignConstraints.centerMark.size.min * 100}% of the code width.`
+      })
+    } else if (size > qrDesignConstraints.centerMark.size.max) {
+      issues.push({
+        code: 'logo_too_large',
+        severity: 'error',
+        field: 'logo',
+        message: `Reduce the center mark to ${qrDesignConstraints.centerMark.size.max * 100}% or less of the code width.`
+      })
+    } else if (size > qrDesignConstraints.centerMark.size.cautionAbove) {
+      issues.push({
+        code: 'logo_size_caution',
+        severity: 'warning',
+        field: 'logo',
+        message: 'The center mark covers more modules than the recommended default.'
+      })
+    }
+
+    const content: unknown = definition.design.logo.content
+    if (!isCenterMarkContent(content)) {
+      issues.push({
+        code: 'logo_content_invalid',
+        severity: 'error',
+        field: 'logo',
+        message: 'Choose the EventScope mark or provide one custom character.'
+      })
+    } else if (content.type === 'glyph') {
+      const graphemes = centerMarkGraphemes(content.value)
+      if (!graphemes.length) {
+        issues.push({
+          code: 'logo_glyph_required',
+          severity: 'error',
+          field: 'logo',
+          message: 'Enter one visible character for the center mark.'
+        })
+      } else if (graphemes.length > 1) {
+        issues.push({
+          code: 'logo_glyph_too_long',
+          severity: 'error',
+          field: 'logo',
+          message: 'Use only one visible character for the center mark.'
+        })
+      }
+    }
   }
 
   const valid = !issues.some(({ severity }) => severity === 'error')

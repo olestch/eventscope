@@ -83,7 +83,11 @@ describe('QR browser export adapters', () => {
   })
 
   it('passes the same canonical SVG to both SVG and PNG adapters', async () => {
-    const artifact = buildQrArtifact(createDefaultQrStudioDraft(eventDatasetProvider.getCatalog()))!
+    const draft = createDefaultQrStudioDraft(eventDatasetProvider.getCatalog())
+    draft.design.logo.content = { type: 'glyph', value: 'N' }
+    const artifact = buildQrArtifact(draft)!
+    expect(artifact.svg).toContain('data-center-glyph="custom"')
+    expect(artifact.svg).toContain('>N</text>')
     const svgEnvironment = createEnvironment()
     downloadQrSvg(artifact.svg, 'parity', svgEnvironment.environment)
     const svgSource = vi.mocked(svgEnvironment.environment.createObjectURL).mock.calls[0]![0]

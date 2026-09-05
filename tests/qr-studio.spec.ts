@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import QrEditorShell from '~/components/qr/QrEditorShell.vue'
+import { qrDesignConstraints } from '~/domain/qr/constraints'
 
 describe('QR Studio UI', () => {
   it('starts with a valid Northstar preview and enabled exports', () => {
@@ -44,5 +45,33 @@ describe('QR Studio UI', () => {
     await wrapper.get('select').setValue('cmp-skyline')
     expect(wrapper.get('.qr-context-list').text()).toContain('Skyline Product Forum')
     expect(wrapper.get('.qr-context-list').text()).toContain('Canvas Rooms')
+  })
+
+  it('derives selectable margin and badge ranges from canonical constraints', () => {
+    const wrapper = mount(QrEditorShell)
+    const ranges = wrapper.findAll('input[type="range"]')
+    expect(ranges[0]!.attributes()).toMatchObject({
+      min: String(qrDesignConstraints.margin.min),
+      max: String(qrDesignConstraints.margin.max),
+      step: String(qrDesignConstraints.margin.step)
+    })
+    expect(ranges[1]!.attributes()).toMatchObject({
+      min: String(qrDesignConstraints.centerMark.size.min),
+      max: String(qrDesignConstraints.centerMark.size.max),
+      step: String(qrDesignConstraints.centerMark.size.step)
+    })
+  })
+
+  it('offers accessible built-in and custom mark content controls', async () => {
+    const wrapper = mount(QrEditorShell)
+    await wrapper.get('input[name="center-mark-content"][value="glyph"]').setValue(true)
+    const glyph = wrapper.get('input[aria-describedby*="center-mark-glyph-help"]')
+    expect(wrapper.text()).toContain('One visible Unicode character')
+    await glyph.setValue('AB')
+    expect(glyph.attributes('aria-invalid')).toBe('true')
+    expect(wrapper.text()).toContain('Use only one visible character')
+    await glyph.setValue(' N ')
+    expect(glyph.attributes('aria-invalid')).toBe('false')
+    expect(wrapper.get('.qr-canvas img').attributes('src')).toContain('data:image/svg+xml')
   })
 })

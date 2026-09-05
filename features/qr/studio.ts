@@ -1,4 +1,5 @@
 import type { ReferenceCatalog } from '~/domain/events/models'
+import { qrDesignConstraints } from '~/domain/qr/constraints'
 import type { QrStudioDraft, QrSvgArtifact } from '~/domain/qr/models'
 import { validateQrDefinition } from '~/domain/qr/validation'
 import type { QRCodeDefinition } from '~/domain/tracking/models'
@@ -10,14 +11,18 @@ export const defaultQrDesign: QrStudioDraft['design'] = {
   background: '#f3f5f2',
   moduleStyle: 'rounded',
   finderStyle: 'rounded',
-  margin: 4,
+  margin: qrDesignConstraints.margin.recommended,
   gradient: {
     enabled: true,
     startColor: '#163f3e',
     endColor: '#07111c',
     direction: 'diagonal'
   },
-  logo: { enabled: true, size: 0.16 }
+  logo: {
+    enabled: true,
+    size: qrDesignConstraints.centerMark.size.default,
+    content: { type: 'eventscope' }
+  }
 }
 
 export function cloneQrStudioDraft(draft: QrStudioDraft): QrStudioDraft {
@@ -26,7 +31,7 @@ export function cloneQrStudioDraft(draft: QrStudioDraft): QrStudioDraft {
     design: {
       ...draft.design,
       gradient: { ...draft.design.gradient },
-      logo: { ...draft.design.logo }
+      logo: { ...draft.design.logo, content: { ...draft.design.logo.content } }
     }
   }
 }
@@ -51,7 +56,7 @@ export function createDefaultQrStudioDraft(catalog: ReferenceCatalog): QrStudioD
     design: {
       ...defaultQrDesign,
       gradient: { ...defaultQrDesign.gradient },
-      logo: { ...defaultQrDesign.logo }
+      logo: { ...defaultQrDesign.logo, content: { ...defaultQrDesign.logo.content } }
     }
   }
 }

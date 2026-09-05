@@ -14,10 +14,13 @@ export interface QrGradientConfig {
   direction: QrGradientDirection
 }
 
+export type QrCenterMarkContent = { type: 'eventscope' } | { type: 'glyph'; value: string }
+
 export interface QrLogoConfig {
   enabled: boolean
-  /** Fraction of the QR matrix width occupied by the built-in mark. */
+  /** Fraction of the QR matrix width occupied by the badge. */
   size: number
+  content: QrCenterMarkContent
 }
 
 export interface QrDesignConfig {
@@ -57,8 +60,12 @@ export type QrValidationIssueCode =
   | 'contrast_caution'
   | 'quiet_zone_missing'
   | 'quiet_zone_caution'
+  | 'logo_too_small'
   | 'logo_too_large'
   | 'logo_size_caution'
+  | 'logo_content_invalid'
+  | 'logo_glyph_required'
+  | 'logo_glyph_too_long'
 
 export interface QrValidationIssue {
   code: QrValidationIssueCode

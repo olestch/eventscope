@@ -34,7 +34,7 @@ export function useQrStudio(initial: QrStudioDraft) {
       design: {
         ...defaultQrDesign,
         gradient: { ...defaultQrDesign.gradient },
-        logo: { ...defaultQrDesign.logo }
+        logo: { ...defaultQrDesign.logo, content: { ...defaultQrDesign.logo.content } }
       }
     })
   }

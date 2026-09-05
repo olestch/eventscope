@@ -73,7 +73,7 @@ defineEmits<{ exportSvg: []; exportPng: []; resetDesign: [] }>()
         </li>
       </ul>
       <p v-else class="qr-quality-pass">
-        Destination, contrast, quiet zone and logo coverage pass the local design checks.
+        Destination, contrast, quiet zone and center mark coverage pass the local design checks.
       </p>
       <p class="qr-certification-note">Guidance only — not a scanner certification.</p>
     </section>

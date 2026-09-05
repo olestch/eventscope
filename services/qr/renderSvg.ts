@@ -1,4 +1,5 @@
 import type { QrMatrix, QrStudioDraft, QrSvgArtifact } from '~/domain/qr/models'
+import { normalizedCenterMarkGlyph, qrDesignConstraints } from '~/domain/qr/constraints'
 
 const escapeXml = (value: string): string =>
   value.replace(/[&<>"']/g, (character) => {
@@ -33,8 +34,9 @@ export interface QrModuleRect {
 }
 
 export interface QrCenterMarkGeometry {
-  mark: QrModuleRect
-  plate: QrModuleRect
+  glyph: QrModuleRect
+  content: QrModuleRect
+  badge: QrModuleRect
   knockout: QrModuleRect
 }
 
@@ -44,18 +46,26 @@ const centeredRect = (matrixSize: number, size: number): QrModuleRect => ({
   size
 })
 
+const insetRect = (rectangle: QrModuleRect, inset: number): QrModuleRect => ({
+  x: rectangle.x + inset,
+  y: rectangle.y + inset,
+  size: rectangle.size - inset * 2
+})
+
 /** All dimensions are expressed in QR modules, before the quiet-zone offset. */
 export function calculateCenterMarkGeometry(
   matrixSize: number,
   configuredSize: number
 ): QrCenterMarkGeometry {
-  const markSize = Math.max(5, matrixSize * configuredSize)
-  const plateSize = markSize + 1.2
-  const knockoutSize = plateSize + 1.5
+  const constraints = qrDesignConstraints.centerMark.geometry
+  const badgeSize = Math.max(constraints.minimumBadgeModules, matrixSize * configuredSize)
+  const badge = centeredRect(matrixSize, badgeSize)
+  const content = insetRect(badge, constraints.badgePaddingModules)
   return {
-    mark: centeredRect(matrixSize, markSize),
-    plate: centeredRect(matrixSize, plateSize),
-    knockout: centeredRect(matrixSize, knockoutSize)
+    glyph: centeredRect(matrixSize, content.size * constraints.glyphScale),
+    content,
+    badge,
+    knockout: centeredRect(matrixSize, badgeSize + constraints.knockoutClearanceModules * 2)
   }
 }
 
@@ -141,7 +151,7 @@ export function renderQrSvg(matrix: QrMatrix, definition: QrStudioDraft): string
     .map(([x, y]) => finderShape(x, y, design.finderStyle === 'rounded', design.background))
     .join('')
   const logo = centerGeometry
-    ? renderCenterMark(centerGeometry, design.margin, design.background, moduleFill)
+    ? renderCenterMark(centerGeometry, design.margin, design.background, moduleFill, design.logo.content)
     : ''
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${totalSize} ${totalSize}" width="1024" height="1024" role="img" aria-labelledby="qr-title" shape-rendering="geometricPrecision"><title id="qr-title">${escapeXml(definition.name)} QR code</title>${definitions}<rect width="${totalSize}" height="${totalSize}" fill="${design.background}"/><g fill="${moduleFill}">${modules.join('')}${finders}</g>${logo}</svg>`
@@ -151,19 +161,47 @@ function renderCenterMark(
   geometry: QrCenterMarkGeometry,
   margin: number,
   background: string,
-  markFill: string
+  markFill: string,
+  content: QrStudioDraft['design']['logo']['content']
 ): string {
-  const mark = {
-    ...geometry.mark,
-    x: geometry.mark.x + margin,
-    y: geometry.mark.y + margin
+  const glyph = {
+    ...geometry.glyph,
+    x: geometry.glyph.x + margin,
+    y: geometry.glyph.y + margin
   }
-  const plate = {
-    ...geometry.plate,
-    x: geometry.plate.x + margin,
-    y: geometry.plate.y + margin
+  const badge = {
+    ...geometry.badge,
+    x: geometry.badge.x + margin,
+    y: geometry.badge.y + margin
   }
-  return `<g aria-hidden="true" data-center-mark="true" data-knockout="${svgNumber(geometry.knockout.x)},${svgNumber(geometry.knockout.y)},${svgNumber(geometry.knockout.size)}"><rect data-center-plate="true" x="${svgNumber(plate.x)}" y="${svgNumber(plate.y)}" width="${svgNumber(plate.size)}" height="${svgNumber(plate.size)}" rx="${svgNumber(plate.size * 0.22)}" fill="${background}"/><path data-center-glyph="true" d="M${svgNumber(mark.x + mark.size * 0.28)} ${svgNumber(mark.y + mark.size * 0.3)}h${svgNumber(mark.size * 0.47)}v${svgNumber(mark.size * 0.16)}h-${svgNumber(mark.size * 0.29)}v${svgNumber(mark.size * 0.12)}h${svgNumber(mark.size * 0.25)}v${svgNumber(mark.size * 0.15)}h-${svgNumber(mark.size * 0.25)}v${svgNumber(mark.size * 0.14)}h${svgNumber(mark.size * 0.3)}v${svgNumber(mark.size * 0.16)}h-${svgNumber(mark.size * 0.48)}z" fill="${markFill}"/></g>`
+  const constraints = qrDesignConstraints.centerMark.geometry
+  const metadata = (rectangle: QrModuleRect): string =>
+    `${svgNumber(rectangle.x)},${svgNumber(rectangle.y)},${svgNumber(rectangle.size)}`
+  const badgeShape = `<rect data-center-badge="${metadata(geometry.badge)}" x="${svgNumber(badge.x)}" y="${svgNumber(badge.y)}" width="${svgNumber(badge.size)}" height="${svgNumber(badge.size)}" rx="${svgNumber(Math.min(constraints.cornerRadiusModules, badge.size * 0.14))}" fill="${background}" stroke="${markFill}" stroke-width="${svgNumber(constraints.outlineWidthModules)}"/>`
+  const contentType = content.type === 'eventscope' ? 'eventscope' : 'glyph'
+  const glyphShape =
+    contentType === 'eventscope'
+      ? renderEventScopeGlyph(glyph, markFill)
+      : renderCustomGlyph(
+          glyph,
+          normalizedCenterMarkGlyph(content.type === 'glyph' ? content.value : '') ?? '',
+          markFill
+        )
+  return `<g aria-hidden="true" data-center-mark="true" data-center-content="${contentType}" data-content-area="${metadata(geometry.content)}" data-glyph-bounds="${metadata(geometry.glyph)}" data-knockout="${metadata(geometry.knockout)}">${badgeShape}${glyphShape}</g>`
+}
+
+function renderEventScopeGlyph(glyph: QrModuleRect, fill: string): string {
+  const stroke = glyph.size * 0.2
+  const middleWidth = glyph.size * 0.82
+  const middleY = glyph.y + (glyph.size - stroke) / 2
+  const bottomY = glyph.y + glyph.size - stroke
+  return `<path data-center-glyph="eventscope" d="M${svgNumber(glyph.x)} ${svgNumber(glyph.y)}h${svgNumber(stroke)}v${svgNumber(glyph.size)}h-${svgNumber(stroke)}zM${svgNumber(glyph.x)} ${svgNumber(glyph.y)}h${svgNumber(glyph.size)}v${svgNumber(stroke)}h-${svgNumber(glyph.size)}zM${svgNumber(glyph.x)} ${svgNumber(middleY)}h${svgNumber(middleWidth)}v${svgNumber(stroke)}h-${svgNumber(middleWidth)}zM${svgNumber(glyph.x)} ${svgNumber(bottomY)}h${svgNumber(glyph.size)}v${svgNumber(stroke)}h-${svgNumber(glyph.size)}z" fill="${fill}"/>`
+}
+
+function renderCustomGlyph(glyph: QrModuleRect, value: string, fill: string): string {
+  const centerX = glyph.x + glyph.size / 2
+  const centerY = glyph.y + glyph.size / 2
+  return `<text data-center-glyph="custom" x="${svgNumber(centerX)}" y="${svgNumber(centerY)}" text-anchor="middle" dominant-baseline="central" font-family="ui-sans-serif,system-ui,sans-serif" font-size="${svgNumber(glyph.size)}" font-weight="800" fill="${fill}">${escapeXml(value)}</text>`
 }
 
 export function createQrSvgArtifact(matrix: QrMatrix, definition: QrStudioDraft): QrSvgArtifact {

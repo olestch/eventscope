@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { eventDatasetProvider } from '~/data/provider/eventDatasetProvider'
+import { qrDesignConstraints } from '~/domain/qr/constraints'
 import { contrastRatio, validateQrDefinition } from '~/domain/qr/validation'
 import { createDefaultQrStudioDraft } from '~/features/qr/studio'
 
@@ -61,5 +62,40 @@ describe('QR definition validation', () => {
     draft.design.margin = 0
     draft.design.logo.size = 0.22
     expect(validateQrDefinition(draft).valid).toBe(false)
+  })
+
+  it('keeps warning thresholds usable while rejecting programmatic size violations', () => {
+    const draft = createDraft()
+    draft.design.margin = qrDesignConstraints.margin.min
+    draft.design.logo.size = 0.18
+    expect(validateQrDefinition(draft)).toMatchObject({ valid: true, status: 'caution' })
+
+    draft.design.margin = qrDesignConstraints.margin.min - 1
+    draft.design.logo.size = qrDesignConstraints.centerMark.size.min - 0.01
+    expect(validateQrDefinition(draft).issues.map(({ code }) => code)).toEqual(
+      expect.arrayContaining(['quiet_zone_missing', 'logo_too_small'])
+    )
+
+    draft.design.margin = qrDesignConstraints.margin.recommended
+    draft.design.logo.size = qrDesignConstraints.centerMark.size.max + 0.01
+    expect(validateQrDefinition(draft).issues.map(({ code }) => code)).toContain('logo_too_large')
+  })
+
+  it('accepts one trimmed Unicode grapheme and rejects empty or excess custom content', () => {
+    const draft = createDraft()
+    draft.design.logo.content = { type: 'glyph', value: ' 👩‍💻 ' }
+    expect(validateQrDefinition(draft).valid).toBe(true)
+
+    draft.design.logo.content = { type: 'glyph', value: '  ' }
+    expect(validateQrDefinition(draft).issues.map(({ code }) => code)).toContain('logo_glyph_required')
+
+    draft.design.logo.content = { type: 'glyph', value: '\u200b' }
+    expect(validateQrDefinition(draft).issues.map(({ code }) => code)).toContain('logo_glyph_required')
+
+    draft.design.logo.content = { type: 'glyph', value: 'AB' }
+    expect(validateQrDefinition(draft).issues.map(({ code }) => code)).toContain('logo_glyph_too_long')
+
+    draft.design.logo.content = { type: 'glyph' } as typeof draft.design.logo.content
+    expect(validateQrDefinition(draft).issues.map(({ code }) => code)).toContain('logo_content_invalid')
   })
 })

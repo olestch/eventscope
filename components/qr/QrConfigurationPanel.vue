@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ReferenceCatalog } from '~/domain/events/models'
+import { qrDesignConstraints } from '~/domain/qr/constraints'
 import {
   qrFinderStyles,
   qrGradientDirections,
@@ -31,6 +32,11 @@ const locations = computed(() =>
 )
 const destinationIssue = computed(() =>
   props.validation.issues.find(({ field }) => field === 'destination')
+)
+const glyphIssue = computed(() =>
+  props.validation.issues.find(({ code }) =>
+    ['logo_glyph_required', 'logo_glyph_too_long'].includes(code)
+  )
 )
 
 const inputValue = (event: Event): string => (event.target as HTMLInputElement).value
@@ -232,14 +238,19 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
           <span>Margin</span>
           <input
             type="range"
-            min="0"
-            max="8"
-            step="1"
+            :min="qrDesignConstraints.margin.min"
+            :max="qrDesignConstraints.margin.max"
+            :step="qrDesignConstraints.margin.step"
             :value="draft.design.margin"
+            aria-describedby="qr-margin-help"
             @input="patchDesign({ margin: Number(inputValue($event)) })"
           />
           <output>{{ draft.design.margin }} modules</output>
         </label>
+        <p id="qr-margin-help" class="field-help">
+          {{ qrDesignConstraints.margin.min }}–{{ qrDesignConstraints.margin.max }} modules;
+          {{ qrDesignConstraints.margin.recommended }} recommended.
+        </p>
       </fieldset>
       <fieldset class="qr-option-block">
         <legend>Center mark</legend>
@@ -249,20 +260,79 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
             :checked="draft.design.logo.enabled"
             @change="patchLogo({ enabled: inputChecked($event) })"
           />
-          <span>Show EventScope mark</span>
+          <span>Show center mark</span>
         </label>
-        <label v-if="draft.design.logo.enabled" class="range-field">
-          <span>Logo size</span>
-          <input
-            type="range"
-            min="0.12"
-            max="0.22"
-            step="0.01"
-            :value="draft.design.logo.size"
-            @input="patchLogo({ size: Number(inputValue($event)) })"
-          />
-          <output>{{ Math.round(draft.design.logo.size * 100) }}%</output>
-        </label>
+        <template v-if="draft.design.logo.enabled">
+          <fieldset class="qr-mark-content-options">
+            <legend>Mark content</legend>
+            <label class="qr-choice-card">
+              <input
+                type="radio"
+                name="center-mark-content"
+                value="eventscope"
+                :checked="draft.design.logo.content.type === 'eventscope'"
+                @change="patchLogo({ content: { type: 'eventscope' } })"
+              />
+              <span>EventScope mark</span>
+            </label>
+            <label class="qr-choice-card">
+              <input
+                type="radio"
+                name="center-mark-content"
+                value="glyph"
+                :checked="draft.design.logo.content.type === 'glyph'"
+                @change="patchLogo({ content: { type: 'glyph', value: 'E' } })"
+              />
+              <span>Custom glyph</span>
+            </label>
+          </fieldset>
+          <label v-if="draft.design.logo.content.type === 'glyph'" class="field-label">
+            Custom glyph
+            <input
+              :value="draft.design.logo.content.value"
+              type="text"
+              autocomplete="off"
+              :aria-describedby="
+                glyphIssue ? 'center-mark-glyph-help center-mark-glyph-error' : 'center-mark-glyph-help'
+              "
+              :aria-invalid="Boolean(glyphIssue)"
+              @input="patchLogo({ content: { type: 'glyph', value: inputValue($event) } })"
+            />
+          </label>
+          <p
+            v-if="draft.design.logo.content.type === 'glyph'"
+            id="center-mark-glyph-help"
+            class="field-help"
+          >
+            One visible Unicode character. Whitespace is trimmed.
+          </p>
+          <p
+            v-if="glyphIssue && draft.design.logo.content.type === 'glyph'"
+            id="center-mark-glyph-error"
+            class="field-error"
+            role="alert"
+          >
+            {{ glyphIssue.message }}
+          </p>
+          <label class="range-field">
+            <span>Badge size</span>
+            <input
+              type="range"
+              :min="qrDesignConstraints.centerMark.size.min"
+              :max="qrDesignConstraints.centerMark.size.max"
+              :step="qrDesignConstraints.centerMark.size.step"
+              :value="draft.design.logo.size"
+              aria-describedby="center-mark-size-help"
+              @input="patchLogo({ size: Number(inputValue($event)) })"
+            />
+            <output>{{ Math.round(draft.design.logo.size * 100) }}%</output>
+          </label>
+          <p id="center-mark-size-help" class="field-help">
+            {{ qrDesignConstraints.centerMark.size.min * 100 }}–{{
+              qrDesignConstraints.centerMark.size.max * 100
+            }}% of the QR width.
+          </p>
+        </template>
       </fieldset>
     </div>
   </section>
