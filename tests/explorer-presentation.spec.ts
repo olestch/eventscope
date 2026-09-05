@@ -5,6 +5,8 @@ import {
   buildBreakdownViewModel,
   buildComparisonViewModel,
   buildFunnelViewModel,
+  buildTemporalHeatmapChartOption,
+  buildTemporalHeatmapViewModel,
   buildTimelineChartOption,
   buildTimelineViewModel,
   formatCount,
@@ -15,6 +17,7 @@ import type {
   ComparisonResult,
   FunnelResult,
   SummaryResult,
+  TemporalHeatmapResult,
   TimeSeriesResult
 } from '~/domain/analytics/contracts'
 
@@ -168,5 +171,39 @@ describe('Explorer presentation models', () => {
     expect(stopped.steps.map(({ label }) => label)).toEqual(['Page view', 'Registration', 'Conversion'])
     expect(stopped.steps[1]).toMatchObject({ progressionFromPrevious: '40.0%', sessions: 4 })
     expect(stopped.steps[2]).toMatchObject({ progressionFromPrevious: '0.0%', sessions: 0 })
+  })
+
+  it('maps temporal cells to canonical coordinates, labels, scale and exact table values', () => {
+    const temporal: TemporalHeatmapResult = {
+      kind: 'temporal_heatmap',
+      metadata,
+      cells: Array.from({ length: 168 }, (_, index) => ({
+        weekday: Math.floor(index / 24) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
+        hour: index % 24,
+        values: { conversion_rate: index === 42 ? 0.384 : 0 }
+      }))
+    }
+    const before = structuredClone(temporal)
+    const model = buildTemporalHeatmapViewModel(temporal, 'conversion_rate')
+    expect(model.cells).toHaveLength(168)
+    expect(model.cells[0]).toMatchObject({
+      weekdayLabel: 'Monday',
+      hourLabel: '00:00',
+      hourRangeLabel: '00:00–01:00 UTC',
+      coordinates: [0, 0, 0],
+      formattedValue: '0.0%'
+    })
+    expect(model.cells[42]).toMatchObject({
+      weekdayLabel: 'Tuesday',
+      hour: 18,
+      coordinates: [18, 1, 0.384],
+      formattedValue: '38.4%'
+    })
+    expect(model.scale).toMatchObject({ min: 0, max: 0.384, minLabel: '0.0%', maxLabel: '38.4%' })
+    expect(buildTemporalHeatmapChartOption(model, true)).toMatchObject({
+      animation: false,
+      series: [{ type: 'heatmap' }]
+    })
+    expect(temporal).toEqual(before)
   })
 })

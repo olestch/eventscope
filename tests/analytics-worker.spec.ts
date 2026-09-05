@@ -70,6 +70,21 @@ describe('Analytics Worker handler', () => {
     })
 
     handle({
+      requestId: 21,
+      type: 'execute_temporal_heatmap',
+      query: { ...summaryQuery, measures: ['events'] }
+    })
+    const temporalResponse = responses.at(-1)
+    expect(temporalResponse).toMatchObject({
+      requestId: 21,
+      type: 'temporal_heatmap_result',
+      result: { kind: 'temporal_heatmap' }
+    })
+    expect(
+      temporalResponse?.type === 'temporal_heatmap_result' ? temporalResponse.result.cells : []
+    ).toHaveLength(168)
+
+    handle({
       requestId: 22,
       type: 'execute_summary',
       query: {
@@ -151,6 +166,20 @@ describe('Analytics Worker client', () => {
 
     expect(await firstOutcome).toBeInstanceOf(SupersededAnalyticsRequestError)
     await expect(second).resolves.toMatchObject({ values: { events: 2 } })
+  })
+
+  it('uses a dedicated typed temporal heatmap request family', async () => {
+    const worker = new FakeWorker()
+    const client = new AnalyticsWorkerClient(() => worker)
+    const pending = client.temporalHeatmap({ ...summaryQuery, measures: ['events'] })
+    const request = worker.sent[0]!
+    expect(request).toMatchObject({ type: 'execute_temporal_heatmap' })
+    worker.respond({
+      requestId: request.requestId,
+      type: 'temporal_heatmap_result',
+      result: { kind: 'temporal_heatmap', cells: [], metadata: {} }
+    })
+    await expect(pending).resolves.toMatchObject({ kind: 'temporal_heatmap' })
   })
 
   it('invalidates an older query when dataset initialization changes', async () => {

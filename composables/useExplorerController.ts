@@ -7,6 +7,7 @@ import {
   buildBreakdownViewModel,
   buildComparisonViewModel,
   buildFunnelViewModel,
+  buildTemporalHeatmapViewModel,
   buildTimelineViewModel,
   formatCount
 } from '~/features/explorer/presentation'
@@ -35,6 +36,7 @@ import {
   type ExplorerProfile,
   type ExplorerQueryState,
   type ExplorerRouteQuery,
+  type ExplorerTemporalMeasure,
   type ExplorerView,
   type TimelinePeriodIntent
 } from '~/features/explorer/queryState'
@@ -81,6 +83,11 @@ export function useExplorerController() {
   )
   const funnelModel = computed(() =>
     results.value?.funnel ? buildFunnelViewModel(results.value.funnel) : undefined
+  )
+  const temporalModel = computed(() =>
+    results.value?.temporal
+      ? buildTemporalHeatmapViewModel(results.value.temporal, results.value.state.temporalMeasure)
+      : undefined
   )
   const selectedBreakdownValues = computed(() => {
     const state = results.value?.state ?? committed.value
@@ -217,6 +224,10 @@ export function useExplorerController() {
     commitState({ ...cloneExplorerState(committed.value), view })
   }
 
+  function selectTemporalMeasure(temporalMeasure: ExplorerTemporalMeasure) {
+    commitState({ ...cloneExplorerState(committed.value), temporalMeasure })
+  }
+
   function selectDatePreset(preset: ExplorerDatePreset) {
     draft.value = applyDatePreset(draft.value, preset, analytics.catalog, referencePeriod)
   }
@@ -240,6 +251,7 @@ export function useExplorerController() {
     breakdownModel,
     comparisonModel,
     funnelModel,
+    temporalModel,
     selectedBreakdownValues,
     activeFilterChips,
     activeMetadata,
@@ -260,6 +272,7 @@ export function useExplorerController() {
     drillIntoTimeline,
     selectComparison,
     selectView,
+    selectTemporalMeasure,
     selectDatePreset,
     retry,
     openFilters: () => {

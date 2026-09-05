@@ -5,6 +5,7 @@ import type {
   FunnelDefinition,
   FunnelResult,
   SummaryResult,
+  TemporalHeatmapResult,
   TimeSeriesResult
 } from '~/domain/analytics/contracts'
 import type { DatasetProfile } from '~/domain/events/models'
@@ -171,6 +172,10 @@ export class AnalyticsWorkerClient implements AnalyticsGateway {
 
   timeSeries(query: AnalyticsQuery): Promise<TimeSeriesResult> {
     return this.send({ type: 'execute_time_series', query }, 'time_series_result')
+  }
+
+  temporalHeatmap(query: AnalyticsQuery): Promise<TemporalHeatmapResult> {
+    return this.send({ type: 'execute_temporal_heatmap', query }, 'temporal_heatmap_result')
   }
 
   funnel(query: AnalyticsQuery, definition: FunnelDefinition): Promise<FunnelResult> {

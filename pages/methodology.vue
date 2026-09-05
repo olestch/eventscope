@@ -10,12 +10,12 @@ const principles = [
   {
     number: '02',
     title: 'Results publish together',
-    text: 'Summary, timeline, breakdown, optional comparison and an active funnel share one query generation. The Explorer may retain the previous complete result while pending, but never combines partial generations.'
+    text: 'Summary, timeline, breakdown, optional comparison and the active funnel or temporal result share one query generation. The Explorer may retain the previous complete result while pending, but never combines partial generations.'
   },
   {
     number: '03',
-    title: 'Charts emit intent, not analytics',
-    text: 'ECharts events become semantic filter or period intents. Pure view models and equivalent table actions preserve the interaction boundary while aggregation remains behind the Analytics Gateway.'
+    title: 'Temporal evidence stays explainable',
+    text: 'One Gateway operation returns all 168 UTC weekday/hour cells. Small deterministic rules summarize only that aggregate, with explicit thresholds and no ML or anomaly language.'
   },
   {
     number: '04',
@@ -29,13 +29,13 @@ const principles = [
     <PageHeader
       eyebrow="Methodology"
       title="A product shell with explicit evidence boundaries."
-      description="How Phase 6A connects observation, route-backed interaction, comparison and funnel exploration."
+      description="How Phase 6B connects observation, route-backed interaction, comparison, funnel and temporal exploration."
     />
     <section class="methodology-hero">
       <p class="methodology-hero__quote">
         “A useful analytical product makes the limits of its evidence as legible as the signal.”
       </p>
-      <div><span>Phase</span><strong>06A · Interactive exploration</strong></div>
+      <div><span>Phase</span><strong>06B · Temporal behavior</strong></div>
     </section>
     <section class="principle-list">
       <article v-for="principle in principles" :key="principle.number">
@@ -58,6 +58,8 @@ const principles = [
             <li>Breakdown cross-filtering and timeline period drilldown</li>
             <li>Route-backed previous-period comparison</li>
             <li>Ordered session funnel under the committed filter scope</li>
+            <li>Monday-first UTC weekday × hour heatmap</li>
+            <li>Thresholded deterministic temporal insights</li>
             <li>Accessible equivalent actions and exact-value tables</li>
             <li>100K default and explicit 1M showcase</li>
           </ul>
@@ -65,7 +67,7 @@ const principles = [
         <div>
           <h3>Deliberately deferred</h3>
           <ul>
-            <li>Day/hour heatmap and chart brushing</li>
+            <li>Recurring weekday/hour filters and chart brushing</li>
             <li>Custom comparison ranges and saved views</li>
             <li>Anomaly detection and map visualization</li>
             <li>Real QR generation or export</li>

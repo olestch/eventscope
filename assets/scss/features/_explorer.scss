@@ -133,7 +133,8 @@
   grid-column: 1 / -1;
 }
 .date-filter label,
-.breakdown-controls label {
+.breakdown-controls label,
+.temporal-controls label {
   display: grid;
   gap: 6px;
   color: var(--slate-500);
@@ -143,7 +144,8 @@
   letter-spacing: 0.05em;
 }
 .date-filter input,
-.breakdown-controls select {
+.breakdown-controls select,
+.temporal-controls select {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
@@ -174,7 +176,7 @@
 
 .query-context {
   display: grid;
-  grid-template-columns: 0.7fr 0.75fr 1.25fr 1.15fr 0.7fr 0.85fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1px;
   overflow: hidden;
   margin-bottom: 10px;
@@ -489,6 +491,76 @@ th {
 
 .funnel-panel {
   padding: 24px;
+}
+.temporal-panel {
+  padding: 24px;
+}
+.temporal-panel .analytics-chart,
+.temporal-panel .analytics-chart__canvas {
+  min-height: 430px;
+  height: 430px;
+}
+.temporal-controls {
+  min-width: 190px;
+}
+.temporal-scale {
+  margin: 18px 0 0;
+  color: var(--slate-300);
+  font-size: 0.74rem;
+}
+.temporal-scale strong {
+  color: var(--paper);
+}
+.temporal-insights {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.temporal-insights__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+}
+.temporal-insights__heading h3 {
+  font-size: 1.05rem;
+}
+.temporal-insights__heading > span {
+  color: var(--slate-500);
+  font-size: 0.7rem;
+}
+.temporal-insight-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.temporal-insight-list article,
+.temporal-insights__empty {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  background: rgba(7, 17, 28, 0.45);
+}
+.temporal-insight-list h4 {
+  margin-bottom: 7px;
+  color: var(--mint);
+  font-size: 0.8rem;
+}
+.temporal-insight-list p,
+.temporal-insights__empty {
+  margin-bottom: 0;
+  color: var(--slate-300);
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+.temporal-data .table-scroll {
+  max-height: 460px;
+  overflow: auto;
+}
+.temporal-data th,
+.temporal-data td {
+  white-space: nowrap;
 }
 .funnel-steps {
   display: grid;

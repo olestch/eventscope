@@ -3,6 +3,7 @@ import type {
   ComparisonResult,
   FunnelResult,
   SummaryResult,
+  TemporalHeatmapResult,
   TimeSeriesResult
 } from '~/domain/analytics/contracts'
 import { primaryConversionFunnel } from '~/features/explorer/productFunnel'
@@ -22,11 +23,12 @@ export interface ExplorerResultSet {
   breakdown: BreakdownResult
   comparison?: ComparisonResult
   funnel?: FunnelResult
+  temporal?: TemporalHeatmapResult
 }
 
 type ExplorerGateway = Pick<
   AnalyticsGateway,
-  'summary' | 'timeSeries' | 'breakdown' | 'compareSummary' | 'funnel'
+  'summary' | 'timeSeries' | 'breakdown' | 'compareSummary' | 'funnel' | 'temporalHeatmap'
 >
 
 export class StaleExplorerResultError extends Error {
@@ -64,7 +66,11 @@ export class ExplorerQueryCoordinator {
             primaryConversionFunnel.definition
           )
         : Promise.resolve(undefined)
-    const [summaryBundle, timeline, breakdown, funnel] = await Promise.all([
+    const temporalPromise =
+      state.view === 'temporal'
+        ? this.gateway.temporalHeatmap(buildExplorerQuery(state, [state.temporalMeasure]))
+        : Promise.resolve(undefined)
+    const [summaryBundle, timeline, breakdown, funnel, temporal] = await Promise.all([
       summaryPromise,
       this.gateway.timeSeries(
         buildExplorerQuery(state, ['events', 'qr_scans'], { adaptiveTimeline: true })
@@ -74,7 +80,8 @@ export class ExplorerQueryCoordinator {
           breakdown: state.breakdown
         })
       ),
-      funnelPromise
+      funnelPromise,
+      temporalPromise
     ])
     if (version !== this.currentVersion) {
       throw new StaleExplorerResultError('A newer Explorer query replaced this result.')
@@ -86,7 +93,8 @@ export class ExplorerQueryCoordinator {
       timeline,
       breakdown,
       ...(summaryBundle.comparison ? { comparison: summaryBundle.comparison } : {}),
-      ...(funnel ? { funnel } : {})
+      ...(funnel ? { funnel } : {}),
+      ...(temporal ? { temporal } : {})
     }
   }
 }

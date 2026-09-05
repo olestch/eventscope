@@ -4,16 +4,25 @@ import type {
   ComparisonResult,
   FunnelResult,
   Measure,
+  TemporalHeatmapResult,
+  TemporalWeekday,
   TimeSeriesResult
 } from '~/domain/analytics/contracts'
 import type { ReferenceCatalog } from '~/domain/events/models'
 import { primaryConversionFunnel } from '~/features/explorer/productFunnel'
 import {
+  deriveTemporalInsights,
+  TEMPORAL_MIN_COMPARISON_TOTAL,
+  TEMPORAL_RELATIVE_INSIGHT_THRESHOLD
+} from '~/features/explorer/temporalInsights'
+import {
   canDrillIntoTimelinePeriod,
   explorerBreakdownMeasures,
   type ExplorerBreakdown,
   type ExplorerBreakdownMeasure,
-  type ExplorerQueryState
+  type ExplorerQueryState,
+  type ExplorerTemporalMeasure,
+  type ExplorerView
 } from '~/features/explorer/queryState'
 
 const integerFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
@@ -42,6 +51,26 @@ export const breakdownLabels: Record<ExplorerBreakdown, string> = {
   location: 'Location',
   device: 'Device'
 }
+
+export const workspaceLabels: Record<ExplorerView, string> = {
+  breakdown: 'Breakdown',
+  funnel: 'Funnel',
+  temporal: 'Temporal'
+}
+
+export const temporalWeekdayLabels: Record<TemporalWeekday, string> = {
+  0: 'Monday',
+  1: 'Tuesday',
+  2: 'Wednesday',
+  3: 'Thursday',
+  4: 'Friday',
+  5: 'Saturday',
+  6: 'Sunday'
+}
+
+export const formatHour = (hour: number): string => `${String(hour).padStart(2, '0')}:00`
+export const formatHourRange = (hour: number): string =>
+  `${formatHour(hour)}–${formatHour((hour + 1) % 24)} UTC`
 
 export const formatCount = (value = 0): string => integerFormatter.format(value)
 export const formatCompactCount = (value = 0): string => compactFormatter.format(value)
@@ -402,3 +431,167 @@ export function buildFunnelViewModel(result: FunnelResult): FunnelViewModel {
     })
   }
 }
+
+export interface TemporalHeatmapCellView {
+  weekday: TemporalWeekday
+  weekdayLabel: string
+  hour: number
+  hourLabel: string
+  hourRangeLabel: string
+  value: number
+  formattedValue: string
+  coordinates: [number, number, number]
+}
+
+export interface TemporalInsightView {
+  id: string
+  title: string
+  detail: string
+}
+
+export interface TemporalHeatmapViewModel {
+  measure: ExplorerTemporalMeasure
+  measureLabel: string
+  empty: boolean
+  cells: TemporalHeatmapCellView[]
+  scale: {
+    min: number
+    max: number
+    visualMax: number
+    minLabel: string
+    maxLabel: string
+  }
+  insights: TemporalInsightView[]
+}
+
+const intensityDirection = (value: number): string => (value >= 0 ? 'higher' : 'lower')
+const countDirection = (value: number): string => (value >= 0 ? 'more' : 'fewer')
+
+export function buildTemporalHeatmapViewModel(
+  result: TemporalHeatmapResult,
+  measure: ExplorerTemporalMeasure
+): TemporalHeatmapViewModel {
+  const cells = result.cells.map((cell) => {
+    const value = cell.values[measure] ?? 0
+    return {
+      weekday: cell.weekday,
+      weekdayLabel: temporalWeekdayLabels[cell.weekday],
+      hour: cell.hour,
+      hourLabel: formatHour(cell.hour),
+      hourRangeLabel: formatHourRange(cell.hour),
+      value,
+      formattedValue: formatMeasure(value, measure),
+      coordinates: [cell.hour, cell.weekday, value] as [number, number, number]
+    }
+  })
+  const values = cells.map(({ value }) => value)
+  const min = values.length ? Math.min(...values) : 0
+  const max = values.length ? Math.max(...values) : 0
+  const label = measureLabels[measure]
+  const insights = deriveTemporalInsights(result, measure).map<TemporalInsightView>((insight) => {
+    if (insight.kind === 'peak_window') {
+      return {
+        id: insight.id,
+        title: 'Peak temporal window',
+        detail: `${temporalWeekdayLabels[insight.evidence.weekday]} · ${formatHourRange(insight.evidence.hour)} has the highest ${label.toLowerCase()} value at ${formatMeasure(insight.evidence.value, measure)}.`
+      }
+    }
+    if (insight.kind === 'weekday_weekend') {
+      const difference = insight.evidence.relativeDifference
+      return {
+        id: insight.id,
+        title: 'Weekday / weekend balance',
+        detail: `Weekend-day heatmap intensity averages ${formatPercentage(Math.abs(difference))} ${intensityDirection(difference)} than weekday intensity for ${label.toLowerCase()}.`
+      }
+    }
+    const difference = insight.evidence.relativeDifference
+    return {
+      id: insight.id,
+      title: 'Morning / evening balance',
+      detail: `Evening cells (18:00–24:00 UTC) contain ${formatPercentage(Math.abs(difference))} ${countDirection(difference)} ${label.toLowerCase()} than morning cells (06:00–12:00 UTC).`
+    }
+  })
+  return {
+    measure,
+    measureLabel: label,
+    empty: max === 0,
+    cells,
+    scale: {
+      min,
+      max,
+      visualMax: max === min ? max + (measure === 'conversion_rate' ? 0.01 : 1) : max,
+      minLabel: formatMeasure(min, measure),
+      maxLabel: formatMeasure(max, measure)
+    },
+    insights
+  }
+}
+
+export function buildTemporalHeatmapChartOption(
+  model: TemporalHeatmapViewModel,
+  reducedMotion: boolean
+): EChartsCoreOption {
+  const hours = Array.from({ length: 24 }, (_, hour) => formatHour(hour))
+  return {
+    animation: !reducedMotion,
+    grid: { left: 78, right: 24, top: 18, bottom: 86 },
+    tooltip: {
+      trigger: 'item',
+      formatter: (parameter: unknown) => {
+        const value = (parameter as { value?: unknown } | undefined)?.value
+        if (!Array.isArray(value)) return ''
+        const hour = Number(value[0])
+        const weekday = Number(value[1])
+        const cell = model.cells.find(
+          (candidate) => candidate.hour === hour && candidate.weekday === weekday
+        )
+        return cell
+          ? `<strong>${cell.weekdayLabel}</strong><br/>${cell.hourRangeLabel}<br/>${model.measureLabel}: ${cell.formattedValue}`
+          : ''
+      }
+    },
+    xAxis: {
+      type: 'category',
+      data: hours,
+      splitArea: { show: false },
+      axisLine: { lineStyle: { color: '#314556' } },
+      axisTick: { show: false },
+      axisLabel: { color: '#8294a3', interval: 1 }
+    },
+    yAxis: {
+      type: 'category',
+      inverse: true,
+      data: Object.values(temporalWeekdayLabels),
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: '#dce6ec' }
+    },
+    visualMap: {
+      type: 'continuous',
+      min: model.scale.min,
+      max: model.scale.visualMax,
+      orient: 'horizontal',
+      left: 'center',
+      bottom: 8,
+      calculable: false,
+      text: [model.scale.maxLabel, model.scale.minLabel],
+      textStyle: { color: '#aab9c5' },
+      inRange: { color: ['#102a3c', '#315bb5', '#5eead4', '#f7c873'] }
+    },
+    series: [
+      {
+        name: model.measureLabel,
+        type: 'heatmap',
+        data: model.cells.map(({ coordinates }) => coordinates),
+        emphasis: { itemStyle: { borderColor: '#ffffff', borderWidth: 1 } },
+        itemStyle: { borderColor: '#07111c', borderWidth: 1 }
+      }
+    ],
+    media: [
+      { query: { maxWidth: 700 }, option: { xAxis: { axisLabel: { interval: 2 } } } },
+      { query: { maxWidth: 440 }, option: { xAxis: { axisLabel: { interval: 3 } } } }
+    ]
+  }
+}
+
+export const temporalInsightRuleLabel = `≥${formatPercentage(TEMPORAL_RELATIVE_INSIGHT_THRESHOLD)} difference · ≥${formatCount(TEMPORAL_MIN_COMPARISON_TOTAL)} counted units`

@@ -19,8 +19,10 @@ export type ExplorerBreakdownMeasure = (typeof explorerBreakdownMeasures)[number
 export type ExplorerDatePreset = '7d' | '30d' | '90d' | 'full'
 export const explorerComparisons = ['none', 'previous'] as const
 export type ExplorerComparison = (typeof explorerComparisons)[number]
-export const explorerViews = ['breakdown', 'funnel'] as const
+export const explorerViews = ['breakdown', 'funnel', 'temporal'] as const
 export type ExplorerView = (typeof explorerViews)[number]
+export const explorerTemporalMeasures = explorerBreakdownMeasures
+export type ExplorerTemporalMeasure = ExplorerBreakdownMeasure
 
 export interface ExplorerQueryState {
   profile: ExplorerProfile
@@ -32,6 +34,7 @@ export interface ExplorerQueryState {
   devices: DeviceType[]
   breakdown: ExplorerBreakdown
   breakdownMeasure: ExplorerBreakdownMeasure
+  temporalMeasure: ExplorerTemporalMeasure
   comparison: ExplorerComparison
   view: ExplorerView
 }
@@ -98,6 +101,7 @@ export function createDefaultExplorerState(catalog: ReferenceCatalog): ExplorerQ
     devices: [],
     breakdown: 'location',
     breakdownMeasure: 'sessions',
+    temporalMeasure: 'events',
     comparison: 'none',
     view: 'breakdown'
   }
@@ -148,6 +152,9 @@ export function normalizeExplorerState(
     breakdownMeasure: explorerBreakdownMeasures.includes(state.breakdownMeasure)
       ? state.breakdownMeasure
       : defaults.breakdownMeasure,
+    temporalMeasure: explorerTemporalMeasures.includes(state.temporalMeasure)
+      ? state.temporalMeasure
+      : defaults.temporalMeasure,
     comparison: explorerComparisons.includes(state.comparison) ? state.comparison : defaults.comparison,
     view: explorerViews.includes(state.view) ? state.view : defaults.view
   }
@@ -173,6 +180,8 @@ export function parseExplorerRoute(
       devices: valueFor('devices', defaults.devices) as DeviceType[],
       breakdown: (scalar(query.breakdown) ?? defaults.breakdown) as ExplorerBreakdown,
       breakdownMeasure: (scalar(query.measure) ?? defaults.breakdownMeasure) as ExplorerBreakdownMeasure,
+      temporalMeasure: (scalar(query.temporalMeasure) ??
+        defaults.temporalMeasure) as ExplorerTemporalMeasure,
       comparison: (scalar(query.compare) ?? defaults.comparison) as ExplorerComparison,
       view: (scalar(query.view) ?? defaults.view) as ExplorerView
     },
@@ -188,6 +197,7 @@ export function serializeExplorerState(state: ExplorerQueryState): Record<string
     end: state.endDate,
     breakdown: state.breakdown,
     measure: state.breakdownMeasure,
+    temporalMeasure: state.temporalMeasure,
     view: state.view
   }
   if (state.comparison === 'previous') query.compare = 'previous'

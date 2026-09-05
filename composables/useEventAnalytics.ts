@@ -7,6 +7,7 @@ import type {
   FunnelDefinition,
   FunnelResult,
   SummaryResult,
+  TemporalHeatmapResult,
   TimeSeriesResult
 } from '~/domain/analytics/contracts'
 import type { DatasetProfile } from '~/domain/events/models'
@@ -121,6 +122,8 @@ export function useEventAnalytics() {
       execute(() => getClient().breakdown(query)),
     timeSeries: (query: AnalyticsQuery): Promise<TimeSeriesResult> =>
       execute(() => getClient().timeSeries(query)),
+    temporalHeatmap: (query: AnalyticsQuery): Promise<TemporalHeatmapResult> =>
+      execute(() => getClient().temporalHeatmap(query)),
     funnel: (query: AnalyticsQuery, definition: FunnelDefinition): Promise<FunnelResult> =>
       execute(() => getClient().funnel(query, definition)),
     compareSummary: (query: AnalyticsQuery): Promise<ComparisonResult> =>

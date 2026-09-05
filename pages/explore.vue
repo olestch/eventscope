@@ -8,6 +8,7 @@ import ExplorerQueryContext from '~/components/explore/ExplorerQueryContext.vue'
 import ExplorerSummary from '~/components/explore/ExplorerSummary.vue'
 import ExplorerToolbar from '~/components/explore/ExplorerToolbar.vue'
 import FunnelPanel from '~/components/explore/FunnelPanel.vue'
+import TemporalHeatmapPanel from '~/components/explore/TemporalHeatmapPanel.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
 import StatePanel from '~/components/ui/StatePanel.vue'
 import { useExplorerController } from '~/composables/useExplorerController'
@@ -165,6 +166,13 @@ async function resetFilters() {
             >
               Funnel
             </button>
+            <button
+              type="button"
+              :aria-pressed="explorer.committed.value.view === 'temporal'"
+              @click="explorer.selectView('temporal')"
+            >
+              Temporal
+            </button>
           </div>
         </header>
         <BreakdownPanel
@@ -177,6 +185,12 @@ async function resetFilters() {
           @filter="explorer.crossFilterBreakdown"
         />
         <FunnelPanel v-else-if="explorer.funnelModel.value" :model="explorer.funnelModel.value" />
+        <TemporalHeatmapPanel
+          v-else-if="explorer.temporalModel.value"
+          :model="explorer.temporalModel.value"
+          :measure="explorer.results.value.state.temporalMeasure"
+          @measure="explorer.selectTemporalMeasure"
+        />
       </section>
     </main>
   </div>

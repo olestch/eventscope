@@ -82,13 +82,19 @@ export function createAnalyticsWorkerHandler(
           type: 'time_series_result',
           result: analytics.timeSeries(request.query)
         })
+      } else if (request.type === 'execute_temporal_heatmap') {
+        emit({
+          requestId: request.requestId,
+          type: 'temporal_heatmap_result',
+          result: analytics.temporalHeatmap(request.query)
+        })
       } else if (request.type === 'execute_funnel') {
         emit({
           requestId: request.requestId,
           type: 'funnel_result',
           result: analytics.funnel(request.query, request.definition)
         })
-      } else {
+      } else if (request.type === 'execute_comparison') {
         emit({
           requestId: request.requestId,
           type: 'comparison_result',

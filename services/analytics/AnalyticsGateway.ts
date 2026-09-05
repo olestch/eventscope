@@ -5,6 +5,7 @@ import type {
   FunnelDefinition,
   FunnelResult,
   SummaryResult,
+  TemporalHeatmapResult,
   TimeSeriesResult
 } from '~/domain/analytics/contracts'
 import type { DatasetProfile } from '~/domain/events/models'
@@ -27,6 +28,7 @@ export interface AnalyticsGateway {
   summary(query: AnalyticsQuery): Promise<SummaryResult>
   breakdown(query: AnalyticsQuery): Promise<BreakdownResult>
   timeSeries(query: AnalyticsQuery): Promise<TimeSeriesResult>
+  temporalHeatmap(query: AnalyticsQuery): Promise<TemporalHeatmapResult>
   funnel(query: AnalyticsQuery, definition: FunnelDefinition): Promise<FunnelResult>
   compareSummary(query: AnalyticsQuery): Promise<ComparisonResult>
   reset(): Promise<void>

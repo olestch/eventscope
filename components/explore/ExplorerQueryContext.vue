@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import type { AnalyticsDatasetMetadata } from '~/services/analytics/AnalyticsGateway'
 import type { ExplorerQueryState } from '~/features/explorer/queryState'
-import { breakdownLabels, formatCount, formatInclusiveRange } from '~/features/explorer/presentation'
+import {
+  breakdownLabels,
+  formatCount,
+  formatInclusiveRange,
+  measureLabels,
+  workspaceLabels
+} from '~/features/explorer/presentation'
 
 defineProps<{
   state: ExplorerQueryState
@@ -31,6 +37,12 @@ defineProps<{
     <div>
       <span>Comparison</span
       ><strong>{{ state.comparison === 'previous' ? 'Previous period' : 'None' }}</strong>
+    </div>
+    <div>
+      <span>Workspace</span><strong>{{ workspaceLabels[state.view] }}</strong>
+    </div>
+    <div v-if="state.view === 'temporal'">
+      <span>Temporal measure</span><strong>{{ measureLabels[state.temporalMeasure] }}</strong>
     </div>
   </section>
 </template>

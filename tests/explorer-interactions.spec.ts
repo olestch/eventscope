@@ -3,9 +3,11 @@ import { describe, expect, it } from 'vitest'
 import BreakdownPanel from '~/components/explore/BreakdownPanel.vue'
 import EventTimeline from '~/components/explore/EventTimeline.vue'
 import FunnelPanel from '~/components/explore/FunnelPanel.vue'
+import TemporalHeatmapPanel from '~/components/explore/TemporalHeatmapPanel.vue'
 import type {
   BreakdownViewModel,
   FunnelViewModel,
+  TemporalHeatmapViewModel,
   TimelineViewModel
 } from '~/features/explorer/presentation'
 
@@ -96,5 +98,40 @@ describe('Explorer accessible interaction boundaries', () => {
     expect(wrapper.get('.funnel-steps').text()).toContain('Page view')
     expect(wrapper.get('table').text()).toContain('Sessions')
     expect(wrapper.get('table').text()).toContain('Entrants')
+  })
+
+  it('offers one accessible measure control and a complete semantic temporal table', async () => {
+    const model: TemporalHeatmapViewModel = {
+      measure: 'events',
+      measureLabel: 'Events',
+      empty: false,
+      cells: Array.from({ length: 168 }, (_, index) => ({
+        weekday: Math.floor(index / 24) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
+        weekdayLabel: index < 24 ? 'Monday' : 'Later day',
+        hour: index % 24,
+        hourLabel: '00:00',
+        hourRangeLabel: '00:00–01:00 UTC',
+        value: index,
+        formattedValue: String(index),
+        coordinates: [index % 24, Math.floor(index / 24), index]
+      })),
+      scale: {
+        min: 0,
+        max: 167,
+        visualMax: 167,
+        minLabel: '0',
+        maxLabel: '167'
+      },
+      insights: [{ id: 'peak-window', title: 'Peak temporal window', detail: 'Traceable evidence.' }]
+    }
+    const wrapper = mount(TemporalHeatmapPanel, {
+      props: { model, measure: 'events' },
+      global: { stubs: { AnalyticsChart: { template: '<div class="chart-intent" />' } } }
+    })
+    expect(wrapper.findAll('tbody tr')).toHaveLength(168)
+    expect(wrapper.text()).toContain('Exact values are available below')
+    expect(wrapper.text()).toContain('Peak temporal window')
+    await wrapper.get('select').setValue('conversion_rate')
+    expect(wrapper.emitted('measure')).toEqual([['conversion_rate']])
   })
 })

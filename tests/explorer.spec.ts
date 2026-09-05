@@ -46,6 +46,7 @@ describe('Explorer product surface', () => {
       breakdownModel: computed(() => buildBreakdownViewModel(breakdown, dataset.catalog, 'sessions')),
       comparisonModel: ref(undefined),
       funnelModel: ref(undefined),
+      temporalModel: ref(undefined),
       selectedBreakdownValues: ref([]),
       activeFilterChips: computed(() => buildActiveFilterChips(state, dataset.catalog)),
       activeMetadata: ref({
@@ -71,6 +72,7 @@ describe('Explorer product surface', () => {
       drillIntoTimeline: vi.fn(),
       selectComparison: vi.fn(),
       selectView: vi.fn(),
+      selectTemporalMeasure: vi.fn(),
       selectDatePreset: vi.fn(),
       retry: vi.fn(),
       openFilters: vi.fn(),

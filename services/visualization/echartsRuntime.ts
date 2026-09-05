@@ -1,9 +1,18 @@
-import { BarChart, LineChart } from 'echarts/charts'
-import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
+import { BarChart, HeatmapChart, LineChart } from 'echarts/charts'
+import { GridComponent, LegendComponent, TooltipComponent, VisualMapComponent } from 'echarts/components'
 import { init, use, type EChartsType } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 
-use([LineChart, BarChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer])
+use([
+  LineChart,
+  BarChart,
+  HeatmapChart,
+  GridComponent,
+  LegendComponent,
+  TooltipComponent,
+  VisualMapComponent,
+  CanvasRenderer
+])
 
 export interface AnalyticsChartInstance {
   setOption: EChartsType['setOption']

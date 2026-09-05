@@ -4,14 +4,16 @@ EventScope is a portfolio product concept for exploring event engagement, organi
 
 ## Current status
 
-Phase 6A deepens the focused Explorer into a visualization-led analytical workflow:
+Phase 6B deepens the focused Explorer into a visualization-led analytical workflow:
 
 - committed campaign, channel, location, device and UTC date filters serialized into shareable URLs;
 - separate draft filters with deliberate Apply and Reset actions;
 - a dominant Apache ECharts event/QR timeline and ranked categorical breakdown;
 - route-backed drilldown from timeline buckets and additive cross-filtering from breakdown bars;
 - optional previous-period summary comparison using Analytics Core comparison results;
-- a shareable Breakdown/Funnel workspace with a typed page-view → registration → conversion journey;
+- a shareable Breakdown/Funnel/Temporal workspace with a typed page-view → registration → conversion journey;
+- a Monday-first weekday × hour heatmap with explicit UTC `[hour, next hour)` semantics;
+- deterministic, explainable temporal insights derived only from the returned aggregate;
 - exact semantic table alternatives for every chart;
 - coherent asynchronous publication of summary, timeline and breakdown results;
 - the existing 100K default and explicit 1M showcase profiles.
@@ -24,7 +26,7 @@ Nuxt runs in client-rendered mode (`ssr: false`) because EventScope is a data-in
 
 Vue depends on an `AnalyticsGateway`, not Worker protocol details. In this self-contained portfolio demo the gateway uses the Phase 4 Worker, columnar runtime and deterministic local dataset. A production implementation could provide the same boundary through an HTTP analytics API and backend event store; sending one million source events to a browser is not presented as a production SaaS recommendation.
 
-Charts use direct modular Apache ECharts 6 integration—line/bar, tooltip, grid, legend and canvas modules only. Analytics results are mapped into immutable presentation models before chart options are built; no aggregation happens in the visualization layer. No universal indexes, cache, `SharedArrayBuffer`, backend or server-owned analytics were added.
+Charts use direct modular Apache ECharts 6 integration—line/bar/heatmap, tooltip, grid, visual scale, legend and canvas modules only. Analytics results are mapped into immutable presentation models before chart options are built; no aggregation happens in the visualization layer. The heatmap is one lazy Gateway/Worker operation that returns all 168 cells. Its small insight rule set is deterministic and thresholded; it is not ML, statistical significance or anomaly detection. No universal indexes, cache, `SharedArrayBuffer`, backend or server-owned analytics were added.
 
 See [Analytics Core](docs/analytics-core.md) for the execution boundary and measure semantics.
 
@@ -55,7 +57,7 @@ CI runs the same application quality gates on pushes and pull requests to `main`
 
 ## Roadmap
 
-Phase 6B can add a day/hour heatmap and other deliberately scoped exploration depth. Anomaly detection, custom comparison ranges, saved views, QR Studio and Reports remain separate later concerns.
+Anomaly detection, recurring weekday/hour filters, custom comparison ranges, saved views, QR Studio and Reports remain separate later concerns.
 
 ## Provenance
 

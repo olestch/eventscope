@@ -56,7 +56,8 @@ describe('Explorer route query state', () => {
       locationIds: [],
       devices: ['desktop', 'mobile'],
       breakdown: 'location',
-      breakdownMeasure: 'sessions'
+      breakdownMeasure: 'sessions',
+      temporalMeasure: 'events'
     })
     expect(serializeExplorerState(state).campaign).toBe('cmp-northstar,cmp-orbit')
   })
@@ -70,15 +71,27 @@ describe('Explorer route query state', () => {
 
   it('round-trips and canonicalizes comparison and analytical workspace state', () => {
     const state = parseExplorerRoute(
-      { compare: 'previous', view: 'funnel' },
+      { compare: 'previous', view: 'temporal', temporalMeasure: 'conversion_rate' },
       referenceCatalog,
       referencePeriod
     )
-    expect(state).toMatchObject({ comparison: 'previous', view: 'funnel' })
-    expect(serializeExplorerState(state)).toMatchObject({ compare: 'previous', view: 'funnel' })
+    expect(state).toMatchObject({
+      comparison: 'previous',
+      view: 'temporal',
+      temporalMeasure: 'conversion_rate'
+    })
+    expect(serializeExplorerState(state)).toMatchObject({
+      compare: 'previous',
+      view: 'temporal',
+      temporalMeasure: 'conversion_rate'
+    })
     expect(
-      parseExplorerRoute({ compare: 'future', view: 'heatmap' }, referenceCatalog, referencePeriod)
-    ).toMatchObject({ comparison: 'none', view: 'breakdown' })
+      parseExplorerRoute(
+        { compare: 'future', view: 'heatmap', temporalMeasure: 'visitors' },
+        referenceCatalog,
+        referencePeriod
+      )
+    ).toMatchObject({ comparison: 'none', view: 'breakdown', temporalMeasure: 'events' })
     expect(buildComparisonQuery(state, ['events']).comparison).toEqual({
       kind: 'previous_period'
     })
@@ -274,5 +287,33 @@ describe('Explorer route query state', () => {
     expect(
       parseExplorerRoute(router.currentRoute.value.query, referenceCatalog, referencePeriod)
     ).toEqual(drilled)
+  })
+
+  it('restores temporal view and measure through reload and Back/Forward', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/explore', component: { template: '<div />' } }]
+    })
+    const base = createDefaultExplorerState(referenceCatalog)
+    const temporal = {
+      ...base,
+      view: 'temporal' as const,
+      temporalMeasure: 'qr_scans' as const
+    }
+    await router.push({ path: '/explore', query: serializeExplorerState(base) })
+    await router.push({ query: serializeExplorerState(temporal) })
+    expect(
+      parseExplorerRoute(router.currentRoute.value.query, referenceCatalog, referencePeriod)
+    ).toEqual(temporal)
+    router.back()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(
+      parseExplorerRoute(router.currentRoute.value.query, referenceCatalog, referencePeriod)
+    ).toEqual(base)
+    router.forward()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(
+      parseExplorerRoute(router.currentRoute.value.query, referenceCatalog, referencePeriod)
+    ).toEqual(temporal)
   })
 })

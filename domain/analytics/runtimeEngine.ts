@@ -13,10 +13,17 @@ import {
   type MeasureValues,
   type ResultMetadata,
   type SummaryResult,
+  type TemporalHeatmapResult,
   type TimeSeriesResult
 } from '~/domain/analytics/contracts'
 import { AnalyticsError } from '~/domain/analytics/errors'
 import { normalizeAnalyticsQuery } from '~/domain/analytics/normalizeQuery'
+import {
+  TEMPORAL_CELLS,
+  TEMPORAL_HOURS,
+  temporalCellIndex,
+  temporalCoordinates
+} from '~/domain/analytics/temporal'
 import type { AnalyticsStorage, DictionaryColumn } from '~/domain/analytics/storage'
 import { eventTypes as supportedEventTypes } from '~/domain/events/models'
 
@@ -373,6 +380,83 @@ function timeSeriesFor(storage: AnalyticsStorage, query: AnalyticsQuery): TimeSe
   }
 }
 
+function addMatchedRow(
+  scope: RuntimeScope,
+  storage: AnalyticsStorage,
+  index: number,
+  eventType: number,
+  qrScan: number | undefined
+) {
+  scope.matchedEventCount += 1
+  scope.matchedSessions.add(storage.sessions[index]!)
+  scope.matchedVisitors.add(storage.visitors[index]!)
+  if (eventType === qrScan) scope.qrScanCount += 1
+}
+
+function addEligibleRow(scope: RuntimeScope, session: number, timestamp: number) {
+  scope.eligibleSessions.set(
+    session,
+    Math.min(timestamp, scope.eligibleSessions.get(session) ?? timestamp)
+  )
+}
+
+function temporalHeatmapFor(storage: AnalyticsStorage, query: AnalyticsQuery): TemporalHeatmapResult {
+  const compiled = validateAndCompile(storage, query)
+  const overall = createScope()
+  const cells = Array.from({ length: TEMPORAL_CELLS }, createScope)
+  const pageView = storage.eventTypes.codeByValue.get('page_view')
+  const qrScan = storage.eventTypes.codeByValue.get('qr_scan')
+  const conversion = storage.eventTypes.codeByValue.get('conversion')
+
+  for (let index = 0; index < storage.eventCount; index += 1) {
+    if (!matchesBaseRow(storage, compiled, index)) continue
+    const timestamp = storage.timestamps[index]!
+    const cell = cells[temporalCellIndex(temporalCoordinates(timestamp))]!
+    const eventType = storage.eventTypes.codes[index]!
+    const session = storage.sessions[index]!
+    if (includesCode(compiled.eventTypes, eventType)) {
+      addMatchedRow(overall, storage, index, eventType, qrScan)
+      addMatchedRow(cell, storage, index, eventType, qrScan)
+    }
+    if (eventType === pageView || eventType === qrScan) {
+      addEligibleRow(overall, session, timestamp)
+      addEligibleRow(cell, session, timestamp)
+    }
+  }
+
+  if (conversion !== undefined) {
+    for (let index = 0; index < storage.eventCount; index += 1) {
+      if (
+        storage.eventTypes.codes[index] !== conversion ||
+        !matchesBaseRow(storage, compiled, index, false)
+      ) {
+        continue
+      }
+      const timestamp = storage.timestamps[index]!
+      const session = storage.sessions[index]!
+      const cell = cells[temporalCellIndex(temporalCoordinates(timestamp))]!
+      const overallEligibleAt = overall.eligibleSessions.get(session)
+      if (overallEligibleAt !== undefined && timestamp >= overallEligibleAt) {
+        overall.convertedSessions.add(session)
+      }
+      const cellEligibleAt = cell.eligibleSessions.get(session)
+      if (cellEligibleAt !== undefined && timestamp >= cellEligibleAt) {
+        cell.convertedSessions.add(session)
+      }
+    }
+  }
+
+  return {
+    kind: 'temporal_heatmap',
+    cells: cells.map((scope, index) => ({
+      weekday: Math.floor(index / TEMPORAL_HOURS) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
+      hour: index % TEMPORAL_HOURS,
+      values: valuesFor(scope, compiled.query.measures)
+    })),
+    metadata: metadataFor(storage, compiled.query, overall)
+  }
+}
+
 function funnelFor(
   storage: AnalyticsStorage,
   query: AnalyticsQuery,
@@ -467,6 +551,7 @@ export function createRuntimeAnalyticsEngine(storage: AnalyticsStorage): Analyti
     summary: (query) => summaryFor(storage, query),
     breakdown: (query) => breakdownFor(storage, query),
     timeSeries: (query) => timeSeriesFor(storage, query),
+    temporalHeatmap: (query) => temporalHeatmapFor(storage, query),
     funnel: (query, definition) => funnelFor(storage, query, definition),
     compareSummary: (query) => compareSummaryFor(storage, query)
   }

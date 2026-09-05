@@ -12,11 +12,18 @@ import {
   type MeasureValues,
   type ResultMetadata,
   type SummaryResult,
+  type TemporalHeatmapResult,
   type TimeSeriesResult
 } from '~/domain/analytics/contracts'
 import { assertValidRange, floorBucket, nextBucket, resolveBucket } from '~/domain/analytics/buckets'
 import { AnalyticsError } from '~/domain/analytics/errors'
 import { normalizeAnalyticsQuery } from '~/domain/analytics/normalizeQuery'
+import {
+  TEMPORAL_CELLS,
+  TEMPORAL_HOURS,
+  temporalCellIndex,
+  temporalCoordinates
+} from '~/domain/analytics/temporal'
 import { conversionContextEventTypes, eventTypes } from '~/domain/events/models'
 import type { EventDataset, EventRecord } from '~/domain/events/models'
 
@@ -253,6 +260,71 @@ function timeSeriesFor(dataset: EventDataset, query: AnalyticsQuery): TimeSeries
   }
 }
 
+function temporalHeatmapFor(dataset: EventDataset, query: AnalyticsQuery): TemporalHeatmapResult {
+  const normalized = validateQuery(query)
+  const overall = {
+    matchedEvents: [],
+    eligibleSessions: new Map(),
+    convertedSessions: new Set()
+  } as ScopeResult
+  const cells = Array.from(
+    { length: TEMPORAL_CELLS },
+    () =>
+      ({ matchedEvents: [], eligibleSessions: new Map(), convertedSessions: new Set() }) as ScopeResult
+  )
+
+  for (const event of dataset.events) {
+    const timestamp = Date.parse(event.timestamp)
+    const cell = cells[temporalCellIndex(temporalCoordinates(timestamp))]!
+    if (matchesQuery(event, normalized)) {
+      overall.matchedEvents.push(event)
+      cell.matchedEvents.push(event)
+    }
+    if (
+      conversionContextEventTypes.some((type) => type === event.type) &&
+      matchesQuery(event, normalized, { includeEventType: false })
+    ) {
+      overall.eligibleSessions.set(
+        event.sessionId,
+        Math.min(timestamp, overall.eligibleSessions.get(event.sessionId) ?? timestamp)
+      )
+      cell.eligibleSessions.set(
+        event.sessionId,
+        Math.min(timestamp, cell.eligibleSessions.get(event.sessionId) ?? timestamp)
+      )
+    }
+  }
+
+  for (const event of dataset.events) {
+    if (
+      event.type !== 'conversion' ||
+      !matchesQuery(event, normalized, { includeEventType: false, includeQrCode: false })
+    ) {
+      continue
+    }
+    const timestamp = Date.parse(event.timestamp)
+    const cell = cells[temporalCellIndex(temporalCoordinates(timestamp))]!
+    const overallEligibleAt = overall.eligibleSessions.get(event.sessionId)
+    if (overallEligibleAt !== undefined && timestamp >= overallEligibleAt) {
+      overall.convertedSessions.add(event.sessionId)
+    }
+    const cellEligibleAt = cell.eligibleSessions.get(event.sessionId)
+    if (cellEligibleAt !== undefined && timestamp >= cellEligibleAt) {
+      cell.convertedSessions.add(event.sessionId)
+    }
+  }
+
+  return {
+    kind: 'temporal_heatmap',
+    cells: cells.map((scope, index) => ({
+      weekday: Math.floor(index / TEMPORAL_HOURS) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
+      hour: index % TEMPORAL_HOURS,
+      values: valuesFor(scope, normalized.measures)
+    })),
+    metadata: metadataFor(dataset, normalized, overall)
+  }
+}
+
 function funnelFor(
   dataset: EventDataset,
   query: AnalyticsQuery,
@@ -357,6 +429,7 @@ export function createAnalyticsEngine(dataset: EventDataset): AnalyticsEngine {
     summary: (query) => summaryFor(dataset, query),
     breakdown: (query) => breakdownFor(dataset, query),
     timeSeries: (query) => timeSeriesFor(dataset, query),
+    temporalHeatmap: (query) => temporalHeatmapFor(dataset, query),
     funnel: (query, definition) => funnelFor(dataset, query, definition),
     compareSummary: (query) => compareSummaryFor(dataset, query)
   }

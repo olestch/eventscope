@@ -34,6 +34,9 @@
   .explorer-summary {
     grid-template-columns: repeat(4, 1fr);
   }
+  .temporal-insight-list {
+    grid-template-columns: 1fr;
+  }
   .asset-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -209,7 +212,8 @@
     min-height: 100px;
   }
   .summary-section,
-  .funnel-panel {
+  .funnel-panel,
+  .temporal-panel {
     padding: 20px 16px;
   }
   .summary-section__header,
@@ -223,6 +227,18 @@
   .comparison-switch button,
   .workspace-switch button {
     flex: 1;
+  }
+  .temporal-panel .analytics-chart,
+  .temporal-panel .analytics-chart__canvas {
+    min-height: 360px;
+    height: 360px;
+  }
+  .temporal-controls {
+    width: 100%;
+    min-width: 0;
+  }
+  .temporal-insights__heading {
+    display: grid;
   }
   .pending-result-note {
     position: static;

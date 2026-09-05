@@ -93,6 +93,23 @@ export interface BreakdownResult {
   metadata: ResultMetadata
 }
 
+export const temporalWeekdays = [0, 1, 2, 3, 4, 5, 6] as const
+export type TemporalWeekday = (typeof temporalWeekdays)[number]
+
+export interface TemporalHeatmapCell {
+  /** Canonical Monday-first weekday identity: Monday = 0, Sunday = 6. */
+  weekday: TemporalWeekday
+  /** UTC hour. Hour 13 represents [13:00, 14:00). */
+  hour: number
+  values: MeasureValues
+}
+
+export interface TemporalHeatmapResult {
+  kind: 'temporal_heatmap'
+  cells: TemporalHeatmapCell[]
+  metadata: ResultMetadata
+}
+
 export interface FunnelDefinition {
   /** Step ordering is semantically meaningful and is never normalized. */
   steps: EventType[]
@@ -125,12 +142,18 @@ export interface ComparisonResult {
 }
 
 export type AnalyticsResult =
-  SummaryResult | TimeSeriesResult | BreakdownResult | FunnelResult | ComparisonResult
+  | SummaryResult
+  | TimeSeriesResult
+  | BreakdownResult
+  | TemporalHeatmapResult
+  | FunnelResult
+  | ComparisonResult
 
 export interface AnalyticsEngine {
   summary(query: AnalyticsQuery): SummaryResult
   breakdown(query: AnalyticsQuery): BreakdownResult
   timeSeries(query: AnalyticsQuery): TimeSeriesResult
+  temporalHeatmap(query: AnalyticsQuery): TemporalHeatmapResult
   funnel(query: AnalyticsQuery, definition: FunnelDefinition): FunnelResult
   compareSummary(query: AnalyticsQuery): ComparisonResult
 }
