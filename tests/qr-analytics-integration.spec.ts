@@ -31,7 +31,7 @@ describe('Scenario QR analytics integration', () => {
         .filter(({ type }) => type === 'qr_scan')
         .every(({ qrCodeId }) => Boolean(qrCodeId && ids.has(qrCodeId)))
     ).toBe(true)
-    expect(dataset.fingerprint).toBe('es2-b50844cc')
+    expect(dataset.fingerprint).toBe('es2-0b946418')
   })
 
   it.each([

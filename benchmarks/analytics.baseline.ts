@@ -11,9 +11,9 @@ const requestedProfiles = (process.env.EVENTSCOPE_BENCH_PROFILES ?? 'development
   .split(',')
   .filter((profile): profile is DatasetProfile => ['development', 'large', 'showcase'].includes(profile))
 const expectedFingerprints: Partial<Record<DatasetProfile, string>> = {
-  development: 'es2-b50844cc',
-  large: 'es2-315c4383',
-  showcase: 'es2-0408c688'
+  development: 'es2-0b946418',
+  large: 'es2-e91f0cc3',
+  showcase: 'es2-903683f5'
 }
 
 const percentile = (values: number[], ratio: number) => {

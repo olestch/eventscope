@@ -15,11 +15,27 @@ describe('100K deterministic dataset', () => {
   it('has the exact profile size and a repeatable fingerprint', () => {
     const repeated = generateDataset({ profile: 'large' })
     expect(dataset.eventCount).toBe(100_000)
-    expect(dataset.fingerprint).toBe('es2-315c4383')
+    expect(dataset.fingerprint).toBe('es2-e91f0cc3')
     expect(repeated.fingerprint).toBe(dataset.fingerprint)
     expect(repeated.events[0]).toEqual(dataset.events[0])
     expect(repeated.events.at(-1)).toEqual(dataset.events.at(-1))
   })
+
+  it.each(dataset.catalog.campaigns.map(({ id, name }) => [id, name] as const))(
+    'keeps %s (%s) analytically useful at 100K',
+    (campaignId) => {
+      const result = engine.summary({
+        ...query,
+        campaignIds: [campaignId],
+        measures: ['events', 'sessions', 'conversions', 'conversion_rate', 'qr_scans']
+      })
+      expect(result.values.events).toBeGreaterThan(10_000)
+      expect(result.values.sessions).toBeGreaterThan(7_000)
+      expect(result.values.conversions).toBeGreaterThan(500)
+      expect(result.values.qr_scans).toBeGreaterThan(500)
+      expect(result.values.conversion_rate).toBeGreaterThan(0)
+    }
+  )
 
   it('preserves Northstar launch and Harbor strength', () => {
     const launchStart = Date.parse(northstarScenarioV1.launchSpike.start)

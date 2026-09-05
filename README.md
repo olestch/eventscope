@@ -4,6 +4,14 @@ EventScope is a portfolio product concept for exploring event engagement, organi
 
 ## Current status
 
+Phase 9.5 refines the exploration foundation without adding a new product area:
+
+- the versioned deterministic scenario gives all six campaigns useful analytics and distinct channel, device and conversion stories;
+- Northstar keeps its launch spike, Harbor Hall strength and mobile Safari degradation narrative;
+- the native date control is replaced by a dependency-free English calendar designed for the EventScope dark UI;
+- opening Filters by pointer leaves date controls closed and unfocused, while keyboard entry may focus the neutral panel boundary;
+- inclusive UTC dates, fixed-history presets, URL restoration and Analytics Core half-open ranges remain unchanged.
+
 Phase 9 adds a backend-compatible Reports workflow around the same URL-backed `AnalyticsQuery` used by Explorer:
 
 - typed `CreateReportRequest`, `ReportJob` and narrow `ReportsGateway` contracts;
@@ -53,6 +61,7 @@ Vue depends on an `AnalyticsGateway`, not Worker protocol details. In this self-
 Charts use direct modular Apache ECharts 6 integration—line/bar/heatmap, tooltip, grid, visual scale, legend and canvas modules only. Analytics results are mapped into immutable presentation models before chart options are built; no aggregation happens in the visualization layer. The heatmap is one lazy Gateway/Worker operation that returns all 168 cells. Its small insight rule set is deterministic and thresholded; it is not ML, statistical significance or anomaly detection. No universal indexes, cache, `SharedArrayBuffer`, backend or server-owned analytics were added.
 
 See [Analytics Core](docs/analytics-core.md) for the execution boundary and measure semantics.
+See [Deterministic dataset](docs/dataset.md) for campaign narratives, fingerprints and date interpretation.
 See [QR Studio](docs/qr-studio.md) for rendering, validation, export and production boundaries.
 See [Reports](docs/reports.md) for request contracts, demo lifecycle and backend-owned generation.
 

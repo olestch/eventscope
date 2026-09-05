@@ -2,10 +2,26 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import ActiveFilterChips from '~/components/explore/ActiveFilterChips.vue'
 import ExplorerFilterPanel from '~/components/explore/ExplorerFilterPanel.vue'
+import ExplorerToolbar from '~/components/explore/ExplorerToolbar.vue'
 import { referenceCatalog } from '~/data/catalog/referenceCatalog'
 import { createDefaultExplorerState } from '~/features/explorer/queryState'
 
 describe('Explorer filter controls', () => {
+  it('distinguishes pointer opening from keyboard opening without moving pointer focus', async () => {
+    const wrapper = mount(ExplorerToolbar, {
+      props: { profile: 'large', activeFilterCount: 0, runtimeError: false },
+      attachTo: document.body
+    })
+    const trigger = wrapper.get<HTMLButtonElement>('.mobile-filter-trigger')
+    trigger.element.focus()
+    await trigger.trigger('click', { detail: 1 })
+    expect(wrapper.emitted('openFilters')?.at(-1)).toEqual(['pointer'])
+    expect(document.activeElement).toBe(trigger.element)
+    await trigger.trigger('click', { detail: 0 })
+    expect(wrapper.emitted('openFilters')?.at(-1)).toEqual(['keyboard'])
+    wrapper.unmount()
+  })
+
   it('edits one shared draft and emits Apply, Reset and Escape close actions', async () => {
     const draft = createDefaultExplorerState(referenceCatalog)
     const wrapper = mount(ExplorerFilterPanel, {
@@ -23,8 +39,8 @@ describe('Explorer filter controls', () => {
       channelIds: ['chn-paid']
     })
 
-    const dateInputs = wrapper.findAll('input[type="date"]')
-    await dateInputs[0]!.setValue('2026-03-10')
+    await wrapper.get('#explorer-start-date').trigger('click')
+    await wrapper.get('[data-date="2026-03-10"]').trigger('click')
     expect(wrapper.emitted('update')?.at(-1)?.[0]).toMatchObject({ startDate: '2026-03-10' })
     await wrapper.get('button.button--primary').trigger('click')
     await wrapper.get('button.button--secondary').trigger('click')
@@ -34,7 +50,7 @@ describe('Explorer filter controls', () => {
     expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
-  it('moves focus into the mobile surface through its public focus boundary', () => {
+  it('uses a neutral panel focus boundary without opening or focusing a date control', () => {
     const wrapper = mount(ExplorerFilterPanel, {
       props: {
         draft: createDefaultExplorerState(referenceCatalog),
@@ -44,8 +60,10 @@ describe('Explorer filter controls', () => {
       },
       attachTo: document.body
     })
-    ;(wrapper.vm as unknown as { focusFirst(): void }).focusFirst()
-    expect(document.activeElement).toBe(wrapper.get('input[type="date"]').element)
+    ;(wrapper.vm as unknown as { focusPanel(): void }).focusPanel()
+    expect(document.activeElement).toBe(wrapper.get('aside').element)
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    expect(wrapper.find('input[type="date"]').exists()).toBe(false)
     wrapper.unmount()
   })
 

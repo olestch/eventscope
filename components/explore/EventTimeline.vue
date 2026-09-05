@@ -58,7 +58,7 @@ const selectPoint = (index: number) => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="point in model.points" :key="point.rangeLabel">
+            <tr v-for="point in model.points" :key="point.range.start">
               <th scope="row">{{ point.rangeLabel }}</th>
               <td>{{ formatCount(point.events) }}</td>
               <td>{{ formatCount(point.qrScans) }}</td>

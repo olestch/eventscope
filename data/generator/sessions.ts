@@ -27,23 +27,21 @@ export interface SessionStreams {
   dimensions: RandomStream
 }
 
-const campaignWeights: Record<string, number> = {
-  'cmp-aurora': 0.11,
-  'cmp-waypoint': 0.11,
-  'cmp-orbit': 0.12,
-  'cmp-northstar': 0.44,
-  'cmp-skyline': 0.1,
-  'cmp-horizon': 0.12
-}
-
 function randomTimestampInRange(start: string, end: string, random: RandomStream): number {
   const startMs = Date.parse(start)
   const endMs = Date.parse(end)
   return startMs + Math.floor(random.next() * (endMs - startMs))
 }
 
-function chooseCampaign(catalog: ReferenceCatalog, random: RandomStream): Campaign {
-  return random.weightedPick(catalog.campaigns, (campaign) => campaignWeights[campaign.id] ?? 0.1)
+function chooseCampaign(
+  catalog: ReferenceCatalog,
+  scenario: ScenarioDefinition,
+  random: RandomStream
+): Campaign {
+  return random.weightedPick(
+    catalog.campaigns,
+    (campaign) => scenario.campaignBehavior[campaign.id]?.trafficWeight ?? 0.1
+  )
 }
 
 function chooseTimestamp(
@@ -74,15 +72,21 @@ function chooseTimestamp(
   return Math.min(date.getTime(), Date.parse(campaign.period.end) - 300)
 }
 
-function chooseDevice(random: RandomStream): {
+function chooseDevice(
+  campaign: Campaign,
+  scenario: ScenarioDefinition,
+  random: RandomStream
+): {
   device: DeviceType
   browser: BrowserName
   operatingSystem: OperatingSystem
 } {
-  const device = random.weightedPick(
-    ['mobile', 'desktop', 'tablet'] as const,
-    (value) => ({ mobile: 0.54, desktop: 0.38, tablet: 0.08 })[value]
-  )
+  const weights = scenario.campaignBehavior[campaign.id]?.deviceWeights ?? {
+    mobile: 0.54,
+    desktop: 0.38,
+    tablet: 0.08
+  }
+  const device = random.weightedPick(['mobile', 'desktop', 'tablet'] as const, (value) => weights[value])
   if (device === 'mobile') {
     const operatingSystem = random.chance(0.52) ? 'iOS' : 'Android'
     return {
@@ -114,9 +118,10 @@ function selectPlacement(
   random: RandomStream
 ) {
   const campaignAssets = catalog.assets.filter(({ campaignId }) => campaignId === campaign.id)
+  const campaignChannelWeights = scenario.campaignBehavior[campaign.id]?.channelWeights
   const channelId = random.weightedPick(
     campaign.channelIds,
-    (id) => scenario.channelBehavior[id]?.trafficWeight ?? 0.1
+    (id) => campaignChannelWeights?.[id] ?? scenario.channelBehavior[id]?.trafficWeight ?? 0.1
   )
   const channelAssets = campaignAssets.filter((asset) => asset.channelId === channelId)
   const asset =
@@ -141,10 +146,10 @@ export function generateSessionBlueprint(
   scenario: ScenarioDefinition,
   streams: SessionStreams
 ): SessionBlueprint {
-  const campaign = chooseCampaign(catalog, streams.traffic)
+  const campaign = chooseCampaign(catalog, scenario, streams.traffic)
   const placement = selectPlacement(campaign, catalog, scenario, streams.traffic)
   const sourceId = placement.asset.sourceId
-  const dimensions = chooseDevice(streams.dimensions)
+  const dimensions = chooseDevice(campaign, scenario, streams.dimensions)
   const country = placement.location
     ? catalog.countries.find(({ code }) => code === placement.location!.countryCode)!
     : streams.dimensions.weightedPick(

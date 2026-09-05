@@ -82,3 +82,54 @@ describe('Northstar stories through Analytics Core', () => {
     expect(after.values.conversion_rate).toBeLessThan(before.values.conversion_rate! * 0.65)
   })
 })
+
+describe('balanced campaign stories through Analytics Core', () => {
+  const summaryFor = (campaignId: string) =>
+    engine.summary(
+      baseQuery({
+        campaignIds: [campaignId],
+        measures: ['events', 'sessions', 'conversions', 'conversion_rate', 'qr_scans']
+      })
+    )
+  const channelFor = (campaignId: string, channelId: string) =>
+    engine.summary(baseQuery({ campaignIds: [campaignId], channelIds: [channelId] }))
+  const deviceFor = (campaignId: string, device: 'mobile' | 'desktop') =>
+    engine.summary(baseQuery({ campaignIds: [campaignId], devices: [device] }))
+
+  it.each(dataset.catalog.campaigns.map(({ id, name }) => [id, name] as const))(
+    'returns meaningful real analytics for %s (%s)',
+    (campaignId) => {
+      const result = summaryFor(campaignId)
+      expect(result.values.events).toBeGreaterThan(1_000)
+      expect(result.values.sessions).toBeGreaterThan(650)
+      expect(result.values.conversions).toBeGreaterThan(40)
+      expect(result.values.qr_scans).toBeGreaterThan(40)
+      expect(result.values.conversion_rate).toBeGreaterThan(0)
+    }
+  )
+
+  it('keeps six distinguishable campaign narratives', () => {
+    expect(deviceFor('cmp-aurora', 'mobile').values.sessions).toBeGreaterThan(
+      deviceFor('cmp-aurora', 'desktop').values.sessions! * 2
+    )
+    expect(channelFor('cmp-waypoint', 'chn-social').values.sessions).toBeGreaterThan(
+      channelFor('cmp-waypoint', 'chn-paid').values.sessions! * 3
+    )
+    expect(channelFor('cmp-orbit', 'chn-partner').values.sessions).toBeGreaterThan(
+      channelFor('cmp-orbit', 'chn-physical').values.sessions! * 1.8
+    )
+    expect(summaryFor('cmp-northstar').values.sessions).toBeGreaterThan(
+      summaryFor('cmp-horizon').values.sessions! * 1.5
+    )
+    expect(channelFor('cmp-skyline', 'chn-paid').values.sessions).toBeGreaterThan(
+      channelFor('cmp-skyline', 'chn-web').values.sessions! * 2
+    )
+    expect(
+      channelFor('cmp-horizon', 'chn-email').values.sessions! +
+        channelFor('cmp-horizon', 'chn-web').values.sessions!
+    ).toBeGreaterThan(summaryFor('cmp-horizon').values.sessions! * 0.6)
+    expect(summaryFor('cmp-orbit').values.conversion_rate).toBeGreaterThan(
+      summaryFor('cmp-skyline').values.conversion_rate! * 3
+    )
+  })
+})

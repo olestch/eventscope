@@ -4,31 +4,36 @@ useHead({ title: 'Methodology' })
 const principles = [
   {
     number: '01',
+    title: 'Fictional data tells six inspectable stories',
+    text: 'One seeded, versioned generator gives every campaign meaningful session, conversion and QR evidence while preserving distinct channel, device and conversion patterns. Fingerprints make intentional scenario changes explicit.'
+  },
+  {
+    number: '02',
     title: 'The route owns the question',
     text: 'Manual filters and semantic chart interactions converge on one committed route. UTC dates, dimensions, comparison and active analytical workspace remain canonical and reloadable.'
   },
   {
-    number: '02',
+    number: '03',
     title: 'Results publish together',
     text: 'Summary, timeline, breakdown, optional comparison and the active funnel or temporal result share one query generation. The Explorer may retain the previous complete result while pending, but never combines partial generations.'
   },
   {
-    number: '03',
+    number: '04',
     title: 'Temporal evidence stays explainable',
     text: 'One Gateway operation returns all 168 UTC weekday/hour cells. Small deterministic rules summarize only that aggregate, with explicit thresholds and no ML or anomaly language.'
   },
   {
-    number: '04',
+    number: '05',
     title: 'Studio output stays local',
     text: 'QR Studio validates and renders one deterministic SVG, then stores configuration behind a typed browser-local repository. It never claims cloud durability, a redirect or a recorded scan.'
   },
   {
-    number: '05',
+    number: '06',
     title: 'Report generation belongs behind a gateway',
     text: 'Reports reuse the normalized AnalyticsQuery, then submit a typed request to a deterministic demo gateway. The UI models asynchronous jobs and downloads without rendering a user-specific PDF in the browser.'
   },
   {
-    number: '06',
+    number: '07',
     title: 'The demo boundary is explicit',
     text: 'The self-contained portfolio uses a Worker-backed analytics gateway, a local QR editor and an in-memory Reports adapter. Production services could replace those edges without moving business rules into Vue.'
   }
@@ -45,7 +50,7 @@ const principles = [
       <p class="methodology-hero__quote">
         “A useful analytical product makes the limits of its evidence as legible as the signal.”
       </p>
-      <div><span>Phase</span><strong>09 · Reports workflow</strong></div>
+      <div><span>Phase</span><strong>09.5 · Exploration refinement</strong></div>
     </section>
     <section class="principle-list">
       <article v-for="principle in principles" :key="principle.number">
@@ -66,6 +71,8 @@ const principles = [
           <h3>Implemented now</h3>
           <ul>
             <li>Breakdown cross-filtering and timeline period drilldown</li>
+            <li>Balanced deterministic evidence across all six campaign stories</li>
+            <li>Accessible English calendar with explicit UTC date semantics</li>
             <li>Route-backed previous-period comparison</li>
             <li>Ordered session funnel under the committed filter scope</li>
             <li>Monday-first UTC weekday × hour heatmap</li>

@@ -5,6 +5,7 @@ import type { ScenarioDefinition } from '~/data/scenarios/northstarV1'
 
 function conversionProbability(session: SessionBlueprint, scenario: ScenarioDefinition): number {
   let probability = scenario.channelBehavior[session.channelId]?.conversionProbability ?? 0.1
+  probability *= scenario.campaignBehavior[session.campaign.id]?.conversionMultiplier ?? 1
   if (session.location?.id === scenario.harborStrength.locationId) {
     probability *= scenario.harborStrength.conversionMultiplier
   }

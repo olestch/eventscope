@@ -48,9 +48,30 @@ describe('deterministic dataset generation', () => {
     expect(datasetProfiles.showcase.eventCount).toBe(1_000_000)
   })
 
-  it('preserves the established development content fingerprint after streaming refactor', () => {
-    expect(generateDataset({ profile: 'development' }).fingerprint).toBe('es2-b50844cc')
+  it('locks the intentional balanced-scenario development fingerprint', () => {
+    expect(generateDataset({ profile: 'development' }).fingerprint).toBe('es2-0b946418')
   })
+})
+
+describe('campaign coverage', () => {
+  const dataset = generateDataset({ profile: 'development' })
+
+  it.each(dataset.catalog.campaigns.map(({ id, name }) => [id, name] as const))(
+    'gives %s (%s) enough sessions, conversions and QR evidence to explore',
+    (campaignId) => {
+      const events = dataset.events.filter((event) => event.campaignId === campaignId)
+      const sessions = new Set(events.map(({ sessionId }) => sessionId))
+      const conversions = new Set(
+        events.filter(({ type }) => type === 'conversion').map(({ sessionId }) => sessionId)
+      )
+      const qrScans = events.filter(({ type }) => type === 'qr_scan')
+
+      expect(events.length).toBeGreaterThan(1_000)
+      expect(sessions.size).toBeGreaterThan(650)
+      expect(conversions.size).toBeGreaterThan(40)
+      expect(qrScans.length).toBeGreaterThan(40)
+    }
+  )
 })
 
 describe('Northstar scenario stories', () => {

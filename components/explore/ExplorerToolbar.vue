@@ -11,7 +11,7 @@ const filterTrigger = ref<HTMLButtonElement>()
 defineExpose({ focusFilterTrigger: () => filterTrigger.value?.focus() })
 const emit = defineEmits<{
   profile: [profile: ExplorerProfile]
-  openFilters: []
+  openFilters: [inputMethod: 'pointer' | 'keyboard']
   retry: []
 }>()
 </script>
@@ -41,7 +41,7 @@ const emit = defineEmits<{
         ref="filterTrigger"
         class="button button--secondary mobile-filter-trigger"
         type="button"
-        @click="emit('openFilters')"
+        @click="emit('openFilters', $event.detail === 0 ? 'keyboard' : 'pointer')"
       >
         Filters <span class="filter-count">{{ activeFilterCount }}</span>
       </button>

@@ -72,6 +72,17 @@ describe('Explorer route query state', () => {
     })
   })
 
+  it('keeps inclusive UTC semantics across month, year and leap-day boundaries', () => {
+    expect(inclusiveDatesToAnalyticsRange('2024-02-29', '2024-02-29')).toEqual({
+      start: '2024-02-29T00:00:00.000Z',
+      end: '2024-03-01T00:00:00.000Z'
+    })
+    expect(inclusiveDatesToAnalyticsRange('2025-12-31', '2025-12-31')).toEqual({
+      start: '2025-12-31T00:00:00.000Z',
+      end: '2026-01-01T00:00:00.000Z'
+    })
+  })
+
   it('round-trips and canonicalizes comparison and analytical workspace state', () => {
     const state = parseExplorerRoute(
       { compare: 'previous', view: 'temporal', temporalMeasure: 'conversion_rate' },
@@ -211,6 +222,14 @@ describe('Explorer route query state', () => {
     const state = createDefaultExplorerState(referenceCatalog)
     expect(applyDatePreset(state, '7d', referenceCatalog, referencePeriod)).toMatchObject({
       startDate: '2026-03-12',
+      endDate: '2026-03-18'
+    })
+    expect(applyDatePreset(state, '30d', referenceCatalog, referencePeriod)).toMatchObject({
+      startDate: '2026-02-17',
+      endDate: '2026-03-18'
+    })
+    expect(applyDatePreset(state, '90d', referenceCatalog, referencePeriod)).toMatchObject({
+      startDate: '2025-12-19',
       endDate: '2026-03-18'
     })
     expect(applyDatePreset(state, 'full', referenceCatalog, referencePeriod)).toMatchObject({

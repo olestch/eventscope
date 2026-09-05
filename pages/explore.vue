@@ -19,10 +19,12 @@ const explorer = useExplorerController()
 const filterPanel = ref<InstanceType<typeof ExplorerFilterPanel>>()
 const toolbar = ref<InstanceType<typeof ExplorerToolbar>>()
 
-async function openFilters() {
+async function openFilters(inputMethod: 'pointer' | 'keyboard') {
   explorer.openFilters()
-  await nextTick()
-  filterPanel.value?.focusFirst()
+  if (inputMethod === 'keyboard') {
+    await nextTick()
+    filterPanel.value?.focusPanel()
+  }
 }
 
 async function closeFilters() {

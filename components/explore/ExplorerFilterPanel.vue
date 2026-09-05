@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import ExplorerDatePicker from '~/components/explore/ExplorerDatePicker.vue'
 import type { DeviceType, ReferenceCatalog } from '~/domain/events/models'
 import {
   cloneExplorerState,
@@ -21,13 +22,13 @@ const emit = defineEmits<{
   preset: [preset: ExplorerDatePreset]
 }>()
 
-const firstControl = ref<HTMLInputElement>()
-defineExpose({ focusFirst: () => firstControl.value?.focus() })
+const panel = ref<HTMLElement>()
+defineExpose({ focusPanel: () => panel.value?.focus() })
 
-const updateDate = (key: 'startDate' | 'endDate', event: Event) => {
+const updateDate = (key: 'startDate' | 'endDate', value: string) => {
   emit('update', {
     ...cloneExplorerState(props.draft),
-    [key]: (event.target as HTMLInputElement).value
+    [key]: value
   })
 }
 
@@ -55,7 +56,9 @@ const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${
       @click="emit('close')"
     />
     <aside
+      ref="panel"
       class="filter-panel"
+      tabindex="-1"
       role="region"
       aria-labelledby="filter-panel-title"
       @keydown.esc.stop="emit('close')"
@@ -78,27 +81,22 @@ const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${
       <div class="filter-panel__content">
         <fieldset class="date-filter">
           <legend>Date range <small>inclusive, UTC</small></legend>
-          <label>
-            <span>Start</span>
-            <input
-              ref="firstControl"
-              type="date"
-              :value="draft.startDate"
-              :min="dateBounds.minimum"
-              :max="dateBounds.maximum"
-              @input="updateDate('startDate', $event)"
-            />
-          </label>
-          <label>
-            <span>End</span>
-            <input
-              type="date"
-              :value="draft.endDate"
-              :min="dateBounds.minimum"
-              :max="dateBounds.maximum"
-              @input="updateDate('endDate', $event)"
-            />
-          </label>
+          <ExplorerDatePicker
+            id="explorer-start-date"
+            label="Start"
+            :model-value="draft.startDate"
+            :minimum="dateBounds.minimum"
+            :maximum="dateBounds.maximum"
+            @update:model-value="updateDate('startDate', $event)"
+          />
+          <ExplorerDatePicker
+            id="explorer-end-date"
+            label="End"
+            :model-value="draft.endDate"
+            :minimum="dateBounds.minimum"
+            :maximum="dateBounds.maximum"
+            @update:model-value="updateDate('endDate', $event)"
+          />
           <div class="date-presets" aria-label="Date presets">
             <button
               v-for="preset in ['7d', '30d', '90d', 'full'] as const"
