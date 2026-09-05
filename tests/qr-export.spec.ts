@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
+import { eventDatasetProvider } from '~/data/provider/eventDatasetProvider'
 import { sanitizeQrFilename } from '~/features/qr/presentation'
+import { buildQrArtifact, createDefaultQrStudioDraft } from '~/features/qr/studio'
 import {
   downloadBlob,
   downloadQrSvg,
@@ -78,5 +80,18 @@ describe('QR browser export adapters', () => {
     expect(canvas.height).toBe(1024)
     expect(context.drawImage).toHaveBeenCalledOnce()
     expect(revoked).toEqual(['blob:eventscope'])
+  })
+
+  it('passes the same canonical SVG to both SVG and PNG adapters', async () => {
+    const artifact = buildQrArtifact(createDefaultQrStudioDraft(eventDatasetProvider.getCatalog()))!
+    const svgEnvironment = createEnvironment()
+    downloadQrSvg(artifact.svg, 'parity', svgEnvironment.environment)
+    const svgSource = vi.mocked(svgEnvironment.environment.createObjectURL).mock.calls[0]![0]
+    expect(await svgSource.text()).toBe(artifact.svg)
+
+    const pngEnvironment = createEnvironment()
+    await rasterizeQrSvg(artifact.svg, 1024, pngEnvironment.environment)
+    const pngSource = vi.mocked(pngEnvironment.environment.createObjectURL).mock.calls[0]![0]
+    expect(await pngSource.text()).toBe(artifact.svg)
   })
 })
