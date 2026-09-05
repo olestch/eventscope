@@ -173,6 +173,15 @@
   padding-top: 16px;
   border-top: 1px solid var(--line);
 }
+.qr-filter-options {
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 8px !important;
+}
+.explorer-qr-back {
+  display: inline-flex;
+  margin: 0 0 10px;
+}
 
 .query-context {
   display: grid;

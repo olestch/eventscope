@@ -31,7 +31,10 @@ const updateDate = (key: 'startDate' | 'endDate', event: Event) => {
   })
 }
 
-const toggle = (group: 'campaignIds' | 'channelIds' | 'locationIds' | 'devices', value: string) => {
+const toggle = (
+  group: 'campaignIds' | 'channelIds' | 'locationIds' | 'qrCodeIds' | 'devices',
+  value: string
+) => {
   const current = props.draft[group] as string[]
   const next = current.includes(value) ? current.filter((item) => item !== value) : [...current, value]
   emit('update', {
@@ -157,6 +160,19 @@ const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${
               @change="toggle('devices', device)"
             />
             <span>{{ deviceLabel(device) }}</span>
+          </label>
+        </fieldset>
+
+        <fieldset class="qr-filter-options">
+          <legend>Scenario QR</legend>
+          <label v-for="qr in catalog.qrCodes" :key="qr.id" class="check-option">
+            <input
+              type="checkbox"
+              :value="qr.id"
+              :checked="draft.qrCodeIds.includes(qr.id)"
+              @change="toggle('qrCodeIds', qr.id)"
+            />
+            <span>{{ qr.name }}</span>
           </label>
         </fieldset>
       </div>

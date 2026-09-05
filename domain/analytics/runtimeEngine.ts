@@ -474,17 +474,30 @@ function funnelFor(
     )
   }
   const stepCodes = definition.steps.map((step) => storage.eventTypes.codeByValue.get(step) ?? -1)
+  const qrEligibleSessions = new Map<number, number>()
+  if (compiled.qrCodes) {
+    for (let index = 0; index < storage.eventCount; index += 1) {
+      if (!matchesBaseRow(storage, compiled, index)) continue
+      const session = storage.sessions[index]!
+      const timestamp = storage.timestamps[index]!
+      qrEligibleSessions.set(session, Math.min(timestamp, qrEligibleSessions.get(session) ?? timestamp))
+    }
+  }
   const sessionState = new Map<number, { nextStep: number; matchedAt: number }>()
   const reached = definition.steps.map(() => 0)
   for (let position = 0; position < storage.eventCount; position += 1) {
     const index = storage.funnelOrder?.[position] ?? position
     if (
-      !matchesBaseRow(storage, compiled, index) ||
+      !matchesBaseRow(storage, compiled, index, !compiled.qrCodes) ||
       !includesCode(compiled.eventTypes, storage.eventTypes.codes[index]!)
     ) {
       continue
     }
     const session = storage.sessions[index]!
+    const qrEligibleAt = compiled.qrCodes ? qrEligibleSessions.get(session) : undefined
+    if (compiled.qrCodes && (qrEligibleAt === undefined || storage.timestamps[index]! < qrEligibleAt)) {
+      continue
+    }
     const state = sessionState.get(session)
     const nextStep = state?.nextStep ?? 0
     const timestamp = storage.timestamps[index]!

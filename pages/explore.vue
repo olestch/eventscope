@@ -76,7 +76,14 @@ async function resetFilters() {
       :state="explorer.committed.value"
       :metadata="explorer.activeMetadata.value"
       :scope-label="explorer.scopeLabel.value"
+      :qr-context-label="explorer.qrContextLabel.value"
     />
+    <NuxtLink
+      v-if="explorer.committed.value.qrCodeIds.length"
+      class="explorer-qr-back text-action"
+      to="/qr"
+      >Back to QR Library</NuxtLink
+    >
     <ActiveFilterChips
       :chips="explorer.activeFilterChips.value"
       @remove="explorer.removeFilter($event.group, $event.value)"

@@ -342,9 +342,29 @@ function funnelFor(
     )
   }
 
+  const qrEligibleSessions = new Map<string, number>()
+  if (normalized.qrCodeIds) {
+    for (const event of dataset.events) {
+      if (event.qrCodeId && matchesQuery(event, normalized)) {
+        const timestamp = Date.parse(event.timestamp)
+        qrEligibleSessions.set(
+          event.sessionId,
+          Math.min(timestamp, qrEligibleSessions.get(event.sessionId) ?? timestamp)
+        )
+      }
+    }
+  }
   const indexedEvents = dataset.events
     .map((event, index) => ({ event, index }))
-    .filter(({ event }) => matchesQuery(event, normalized))
+    .filter(({ event }) => {
+      if (!normalized.qrCodeIds) return matchesQuery(event, normalized)
+      const eligibleAt = qrEligibleSessions.get(event.sessionId)
+      return (
+        eligibleAt !== undefined &&
+        Date.parse(event.timestamp) >= eligibleAt &&
+        matchesQuery(event, normalized, { includeQrCode: false })
+      )
+    })
   const sessions = new Map<string, typeof indexedEvents>()
   for (const item of indexedEvents) {
     const journey = sessions.get(item.event.sessionId) ?? []

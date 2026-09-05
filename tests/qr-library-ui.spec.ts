@@ -53,6 +53,8 @@ describe('QR Library UI', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('No saved QR codes yet')
     expect(wrapper.text()).toContain('Saved only in this browser')
+    expect(wrapper.text()).toContain('Scenario QR')
+    expect(wrapper.text()).toContain('Analytics available')
     expect(wrapper.getComponent(RouterLinkStub).props('to')).toBe('/qr/new')
   })
 
@@ -62,7 +64,22 @@ describe('QR Library UI', () => {
     expect(wrapper.get('.qr-preview img').attributes('src')).toContain('data:image/svg+xml')
     expect(wrapper.text()).toContain(base.name)
     expect(wrapper.text()).toContain(base.destination)
+    expect(wrapper.text()).toContain('No analytics yet')
     expect(wrapper.get('[aria-label^="Actions for"]').text()).toContain('Export SVG')
+  })
+
+  it('keeps Scenario QR read-only and links its stable identity to Explorer', async () => {
+    const wrapper = mountLibrary(memoryRepository())
+    await flushPromises()
+    const scenario = wrapper.get('[aria-label="Scenario QR codes"]')
+    expect(scenario.text()).toContain('View analytics')
+    expect(scenario.text()).not.toContain('Delete')
+    expect(scenario.text()).not.toContain('Duplicate')
+    const link = scenario.getComponent(RouterLinkStub)
+    expect(link.props('to')).toMatchObject({
+      path: '/explore',
+      query: { qr: expect.stringMatching(/^qr-/) }
+    })
   })
 
   it('duplicates and requires an explicit confirmation before deletion', async () => {

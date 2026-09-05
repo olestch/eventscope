@@ -128,6 +128,26 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
+.qr-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 0 18px;
+}
+.qr-section-heading h2,
+.qr-section-heading p {
+  margin: 0;
+}
+.qr-section-heading > p {
+  max-width: 540px;
+  color: var(--slate-500);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+.qr-product-section {
+  margin-top: 48px;
+}
 .saved-qr-card {
   overflow: hidden;
   border: 1px solid var(--line);
@@ -146,8 +166,30 @@
   padding: 21px;
 }
 .saved-qr-card__body h2,
+.saved-qr-card__body h3,
 .saved-qr-card__body p {
   margin: 0;
+}
+.saved-qr-card__body h3 {
+  font-size: 1.1rem;
+}
+.saved-qr-card__body .qr-availability {
+  width: fit-content;
+  border: 1px solid rgba(247, 200, 115, 0.28);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--gold);
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.saved-qr-card__body .qr-availability--available {
+  border-color: rgba(94, 234, 212, 0.3);
+  color: var(--mint);
+}
+.scenario-qr-card .saved-qr-card__actions .button--primary {
+  grid-column: 1 / -1;
 }
 .saved-qr-card__body > p {
   color: var(--slate-300);

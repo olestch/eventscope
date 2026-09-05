@@ -95,6 +95,7 @@ export function useExplorerController() {
       campaign: state.campaignIds,
       channel: state.channelIds,
       location: state.locationIds,
+      qr_code: state.qrCodeIds,
       device: state.devices
     }
     return [...groups[state.breakdown]]
@@ -108,6 +109,13 @@ export function useExplorerController() {
     if (!campaigns.length) return 'All campaigns'
     if (campaigns.length === 1) return campaigns[0]!
     return `${campaigns.length} campaigns`
+  })
+  const qrContextLabel = computed(() => {
+    const selected = committed.value.qrCodeIds.map(
+      (id) => analytics.catalog.qrCodes.find((qr) => qr.id === id)?.name ?? id
+    )
+    if (!selected.length) return undefined
+    return selected.length === 1 ? selected[0] : `${selected.length} scenario QR codes`
   })
 
   async function executeCommitted(state: ExplorerQueryState, forceInitialization = false) {
@@ -187,7 +195,10 @@ export function useExplorerController() {
   }
 
   function removeFilter(
-    group: keyof Pick<ExplorerQueryState, 'campaignIds' | 'channelIds' | 'locationIds' | 'devices'>,
+    group: keyof Pick<
+      ExplorerQueryState,
+      'campaignIds' | 'channelIds' | 'locationIds' | 'qrCodeIds' | 'devices'
+    >,
     value: string
   ) {
     commitState(removeExplorerFilter(committed.value, group, value))
@@ -257,6 +268,7 @@ export function useExplorerController() {
     activeMetadata,
     dateBounds,
     scopeLabel,
+    qrContextLabel,
     noResults,
     pending,
     queryError,

@@ -41,6 +41,7 @@ describe('Explorer route query state', () => {
         channel: ['chn-paid', 'chn-partner,chn-paid'],
         location: 'missing',
         device: 'mobile,desktop,phone',
+        qr: 'qr-river-stage,qr-harbor-entry,qr-river-stage,missing',
         breakdown: 'country',
         measure: 'visitors'
       },
@@ -55,11 +56,13 @@ describe('Explorer route query state', () => {
       channelIds: ['chn-paid', 'chn-partner'],
       locationIds: [],
       devices: ['desktop', 'mobile'],
+      qrCodeIds: ['qr-harbor-entry', 'qr-river-stage'],
       breakdown: 'location',
       breakdownMeasure: 'sessions',
       temporalMeasure: 'events'
     })
     expect(serializeExplorerState(state).campaign).toBe('cmp-northstar,cmp-orbit')
+    expect(serializeExplorerState(state).qr).toBe('qr-harbor-entry,qr-river-stage')
   })
 
   it('converts an inclusive UI end date to an exclusive UTC query boundary', () => {
@@ -104,6 +107,7 @@ describe('Explorer route query state', () => {
         channel: 'chn-paid',
         location: 'loc-harbor',
         device: 'mobile',
+        qr: 'qr-harbor-entry',
         start: '2026-03-04',
         end: '2026-03-18'
       },
@@ -115,6 +119,7 @@ describe('Explorer route query state', () => {
       channelIds: ['chn-paid'],
       locationIds: ['loc-harbor'],
       devices: ['mobile'],
+      qrCodeIds: ['qr-harbor-entry'],
       breakdown: 'channel'
     })
   })

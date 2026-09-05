@@ -2,7 +2,7 @@
 
 ## Boundary
 
-Phase 7.5 adds a browser-local library to the editor and export surface. `SavedQrCode` and `QrStudioDraft` remain intentionally separate from the scenario's immutable `QRCodeDefinition`; creating, updating, duplicating or deleting a saved QR never adds or rewrites analytical events. The stable saved identity and campaign/channel/location IDs leave a clean seam for a later QR ID → AnalyticsQuery connection, but this phase does not implement that connection.
+The QR product area presents two deliberately separate lifecycles. Scenario `QRCodeDefinition` records are immutable deterministic catalog identities referenced by deterministic QR scan events; they are read-only, remain outside localStorage and can open Explorer through their stable `qrCodeId`. `SavedQrCode` and `QrStudioDraft` are browser-local authoring entities; creating, updating, duplicating or deleting one never adds or rewrites analytical events, so the UI states “No analytics yet” rather than inventing zero activity.
 
 In a production system the frontend would own visual configuration, preview, local guidance and explicit export actions. A backend would normally own authorization, durable shared persistence, tracked short-URL creation, redirect resolution and scan/event ingestion. EventScope stores configuration in the current browser only, encodes the configured HTTPS destination directly and does not pretend to create a tracked redirect.
 
@@ -13,6 +13,10 @@ Vue depends on the async `QrRepository` interface. `LocalStorageQrRepository` is
 New IDs come from Web Crypto UUIDs, not timestamps. Records include `createdAt` and `updatedAt` ISO timestamps and are listed by newest update with a deterministic ID tie-break. Creation and updates reuse the same domain validation as preview; mapping functions explicitly copy every editable design field. Dirty comparison fingerprints editable configuration only, excluding IDs and timestamps. A successful first save replaces the route with `/qr/:id`; later saves update that same identity. The editor warns on browser unload while dirty. This is intentionally not cross-tab synchronization or protection against every client-side route transition.
 
 Library thumbnails and SVG/PNG actions call the same `buildQrArtifact` and browser export functions as Studio. No alternate renderer exists.
+
+Scenario QR definitions predate the modern visual configuration. Presentation maps them deliberately to the Studio default design for preview/export while keeping their catalog analytics identity independent from rendering configuration. Scenario actions never Save, Edit, Delete or write to `eventscope:qr-library`.
+
+The production lifecycle would be broader: Studio authoring → backend tracked identity → redirect service → scan ingestion → analytics storage/API → `AnalyticsGateway` → Explorer. EventScope implements none of those services. Its deterministic Scenario QR and event dataset demonstrate the analytics path; local Saved QR demonstrate only frontend authoring and persistence.
 
 ## Rendering pipeline
 
@@ -42,7 +46,7 @@ Invalid drafts leave every editor control available but pause preview generation
 
 - backend redirect and URL-shortening services;
 - cloud persistence, authentication and multi-user asset sharing;
-- QR analytics integration and scan ingestion;
+- analytics ingestion for user-saved QR codes;
 - remote or uploaded logos;
 - camera scanning, batch generation and dynamic redirects;
 - report, PDF and presentation generation.

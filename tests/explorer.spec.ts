@@ -57,6 +57,7 @@ describe('Explorer product surface', () => {
       }),
       dateBounds: { minimum: '2025-07-01', maximum: '2026-06-30' },
       scopeLabel: ref('Northstar Launch'),
+      qrContextLabel: ref(undefined),
       noResults: ref(false),
       pending: ref(false),
       queryError: ref(undefined),
@@ -86,7 +87,8 @@ describe('Explorer product surface', () => {
     const wrapper = mount(ExplorePage, {
       global: {
         stubs: {
-          AnalyticsChart: { template: '<div class="chart-stub" />' }
+          AnalyticsChart: { template: '<div class="chart-stub" />' },
+          NuxtLink: { template: '<a><slot /></a>' }
         }
       }
     })

@@ -4,7 +4,7 @@ EventScope is a portfolio product concept for exploring event engagement, organi
 
 ## Current status
 
-Phase 7.5 adds a browser-local QR Library to the production-quality, frontend-owned QR Studio:
+Phase 8 restores deterministic Scenario QR alongside the browser-local QR Library and connects those tracked demo identities to Explorer:
 
 - typed campaign context and visual configuration kept separate from historical QR facts;
 - absolute HTTPS destination validation and immediate matrix-backed SVG preview;
@@ -14,10 +14,12 @@ Phase 7.5 adds a browser-local QR Library to the production-quality, frontend-ow
 - create, reopen, update, duplicate, export and confirmed-delete workflows behind a typed `QrRepository`;
 - a versioned, defensively validated `LocalStorageQrRepository` with explicit local-only semantics;
 - clean separation between user-saved QR codes and immutable scenario QR definitions.
+- read-only Scenario QR cards with canonical previews, export and URL-backed analytics navigation;
+- QR filters and QR breakdowns flowing through the existing Gateway, Worker and Analytics Core.
 
 The Explorer continues to provide:
 
-- committed campaign, channel, location, device and UTC date filters serialized into shareable URLs;
+- committed campaign, channel, location, Scenario QR, device and UTC date filters serialized into shareable URLs;
 - separate draft filters with deliberate Apply and Reset actions;
 - a dominant Apache ECharts event/QR timeline and ranked categorical breakdown;
 - route-backed drilldown from timeline buckets and additive cross-filtering from breakdown bars;
@@ -29,7 +31,7 @@ The Explorer continues to provide:
 - coherent asynchronous publication of summary, timeline and breakdown results;
 - the existing 100K default and explicit 1M showcase profiles.
 
-Browser Back/Forward and direct URL reload restore the committed query. Existing complete results remain visibly marked while a newer query is pending; partial result generations are never mixed. Saved QR assets contain configuration only: Studio editing and persistence never mutate the deterministic analytics dataset or claim scan analytics.
+Browser Back/Forward and direct URL reload restore the committed query, including one or multiple Scenario QR IDs. Existing complete results remain visibly marked while a newer query is pending; partial result generations are never mixed. Saved QR assets contain configuration only: Studio editing and persistence never mutate the deterministic analytics dataset or claim scan analytics.
 
 ## Architecture boundaries
 
@@ -69,7 +71,7 @@ CI runs the same application quality gates on pushes and pull requests to `main`
 
 ## Roadmap
 
-QR-to-analytics drilldown, tracked redirect creation, cloud persistence, Reports, anomaly detection, recurring weekday/hour filters and saved views remain separate later concerns.
+Tracked redirect creation, analytics ingestion for user-saved QR, cloud persistence, Reports, anomaly detection, recurring weekday/hour filters and saved views remain separate later concerns.
 
 ## Provenance
 

@@ -13,6 +13,7 @@ defineProps<{
   state: ExplorerQueryState
   metadata?: AnalyticsDatasetMetadata
   scopeLabel: string
+  qrContextLabel?: string
 }>()
 </script>
 
@@ -30,6 +31,9 @@ defineProps<{
     </div>
     <div>
       <span>Scope</span><strong>{{ scopeLabel }}</strong>
+    </div>
+    <div v-if="qrContextLabel">
+      <span>Scenario QR</span><strong>{{ qrContextLabel }}</strong>
     </div>
     <div>
       <span>Breakdown</span><strong>{{ breakdownLabels[state.breakdown] }}</strong>

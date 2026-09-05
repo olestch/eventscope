@@ -51,6 +51,26 @@ describe('local Analytics Core baseline', () => {
           devices: ['mobile'],
           measures: [...query.measures]
         }),
+      qrFilteredSummary: () =>
+        engine.summary({
+          ...query,
+          qrCodeIds: ['qr-harbor-entry'],
+          measures: [...query.measures]
+        }),
+      qrFilteredBreakdown: () =>
+        engine.breakdown({
+          ...query,
+          qrCodeIds: ['qr-harbor-entry'],
+          measures: [...query.measures],
+          breakdown: 'device'
+        }),
+      qrFilteredTimeSeries: () =>
+        engine.timeSeries({
+          ...query,
+          qrCodeIds: ['qr-harbor-entry'],
+          measures: [...query.measures],
+          bucket: { kind: 'adaptive', maxPoints: 48 }
+        }),
       breakdown: () =>
         engine.breakdown({ ...query, measures: [...query.measures], breakdown: 'channel' }),
       timeSeries: () =>

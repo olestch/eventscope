@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import QrPreview from './QrPreview.vue'
+import ScenarioQrLibrary from './ScenarioQrLibrary.vue'
 import StatePanel from '~/components/ui/StatePanel.vue'
 import { useQrLibrary } from '~/composables/useQrLibrary'
 import { savedQrToDraft, type QrRepository, type SavedQrCode } from '~/domain/qr/library'
@@ -62,6 +63,13 @@ onMounted(library.load)
 </script>
 
 <template>
+  <header class="qr-section-heading">
+    <div>
+      <p class="eyebrow">Your browser</p>
+      <h2>Saved QR</h2>
+    </div>
+    <p>Editable local assets. They have no tracking identity or analytics yet.</p>
+  </header>
   <p class="qr-library-note">
     Saved only in this browser. No account, cloud sync or tracking is created.
   </p>
@@ -96,6 +104,7 @@ onMounted(library.load)
       <div class="saved-qr-card__preview"><QrPreview :draft="draftFor(item)" :label="item.name" /></div>
       <div class="saved-qr-card__body">
         <p class="saved-qr-card__updated">Updated {{ updatedLabel(item) }}</p>
+        <p class="qr-availability">No analytics yet</p>
         <h2>{{ item.name }}</h2>
         <p>{{ contextFor(item).campaign }} · {{ contextFor(item).channel }}</p>
         <p class="saved-qr-card__destination">{{ item.destination }}</p>
@@ -147,4 +156,5 @@ onMounted(library.load)
       </div>
     </article>
   </section>
+  <ScenarioQrLibrary :catalog="catalog" />
 </template>

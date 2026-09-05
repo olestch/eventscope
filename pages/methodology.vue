@@ -40,7 +40,7 @@ const principles = [
       <p class="methodology-hero__quote">
         “A useful analytical product makes the limits of its evidence as legible as the signal.”
       </p>
-      <div><span>Phase</span><strong>07.5 · QR Library</strong></div>
+      <div><span>Phase</span><strong>08 · QR analytics</strong></div>
     </section>
     <section class="principle-list">
       <article v-for="principle in principles" :key="principle.number">
@@ -70,6 +70,7 @@ const principles = [
             <li>Matrix-backed QR Studio with SVG and PNG export</li>
             <li>Typed URL, contrast, quiet-zone and logo validation</li>
             <li>Versioned browser-local QR repository and saved-asset CRUD</li>
+            <li>Read-only Scenario QR connected to URL-backed Explorer analytics</li>
           </ul>
         </div>
         <div>
@@ -78,7 +79,7 @@ const principles = [
             <li>Recurring weekday/hour filters and chart brushing</li>
             <li>Custom comparison ranges and saved views</li>
             <li>Anomaly detection and map visualization</li>
-            <li>Tracked redirects, cloud persistence and QR analytics integration</li>
+            <li>Tracked redirects, cloud persistence and analytics for user-saved QR</li>
             <li>PDF and presentation generation</li>
           </ul>
         </div>

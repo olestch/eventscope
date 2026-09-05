@@ -5,7 +5,7 @@ import type { TimeRange } from '~/domain/shared/primitives'
 export const explorerProfiles = ['large', 'showcase'] as const
 export type ExplorerProfile = (typeof explorerProfiles)[number]
 
-export const explorerBreakdowns = ['campaign', 'channel', 'location', 'device'] as const
+export const explorerBreakdowns = ['campaign', 'channel', 'location', 'qr_code', 'device'] as const
 export type ExplorerBreakdown = (typeof explorerBreakdowns)[number]
 
 export const explorerBreakdownMeasures = [
@@ -31,6 +31,7 @@ export interface ExplorerQueryState {
   campaignIds: string[]
   channelIds: string[]
   locationIds: string[]
+  qrCodeIds: string[]
   devices: DeviceType[]
   breakdown: ExplorerBreakdown
   breakdownMeasure: ExplorerBreakdownMeasure
@@ -41,7 +42,7 @@ export interface ExplorerQueryState {
 
 export type ExplorerFilterGroup = keyof Pick<
   ExplorerQueryState,
-  'campaignIds' | 'channelIds' | 'locationIds' | 'devices'
+  'campaignIds' | 'channelIds' | 'locationIds' | 'qrCodeIds' | 'devices'
 >
 
 export type ExplorerRouteQuery = Record<string, string | null | undefined | Array<string | null>>
@@ -50,6 +51,7 @@ const routeKeys = {
   campaignIds: 'campaign',
   channelIds: 'channel',
   locationIds: 'location',
+  qrCodeIds: 'qr',
   devices: 'device'
 } as const
 
@@ -98,6 +100,7 @@ export function createDefaultExplorerState(catalog: ReferenceCatalog): ExplorerQ
     campaignIds: [campaign.id],
     channelIds: [],
     locationIds: [],
+    qrCodeIds: [],
     devices: [],
     breakdown: 'location',
     breakdownMeasure: 'sessions',
@@ -147,6 +150,10 @@ export function normalizeExplorerState(
       [...new Set(state.locationIds)].sort(),
       catalog.locations.map(({ id }) => id)
     ),
+    qrCodeIds: validIds(
+      [...new Set(state.qrCodeIds)].sort(),
+      catalog.qrCodes.map(({ id }) => id)
+    ),
     devices: validIds([...new Set(state.devices)].sort(), catalog.devices) as DeviceType[],
     breakdown: explorerBreakdowns.includes(state.breakdown) ? state.breakdown : defaults.breakdown,
     breakdownMeasure: explorerBreakdownMeasures.includes(state.breakdownMeasure)
@@ -177,6 +184,7 @@ export function parseExplorerRoute(
       campaignIds: valueFor('campaignIds', defaults.campaignIds),
       channelIds: valueFor('channelIds', defaults.channelIds),
       locationIds: valueFor('locationIds', defaults.locationIds),
+      qrCodeIds: valueFor('qrCodeIds', defaults.qrCodeIds),
       devices: valueFor('devices', defaults.devices) as DeviceType[],
       breakdown: (scalar(query.breakdown) ?? defaults.breakdown) as ExplorerBreakdown,
       breakdownMeasure: (scalar(query.measure) ?? defaults.breakdownMeasure) as ExplorerBreakdownMeasure,
@@ -223,6 +231,7 @@ export function cloneExplorerState(state: ExplorerQueryState): ExplorerQueryStat
     campaignIds: [...state.campaignIds],
     channelIds: [...state.channelIds],
     locationIds: [...state.locationIds],
+    qrCodeIds: [...state.qrCodeIds],
     devices: [...state.devices]
   }
 }
@@ -251,6 +260,7 @@ const breakdownFilterGroups: Record<ExplorerBreakdown, ExplorerFilterGroup> = {
   campaign: 'campaignIds',
   channel: 'channelIds',
   location: 'locationIds',
+  qr_code: 'qrCodeIds',
   device: 'devices'
 }
 
@@ -311,6 +321,7 @@ export function buildExplorerQuery(
     ...(state.campaignIds.length ? { campaignIds: [...state.campaignIds] } : {}),
     ...(state.channelIds.length ? { channelIds: [...state.channelIds] } : {}),
     ...(state.locationIds.length ? { locationIds: [...state.locationIds] } : {}),
+    ...(state.qrCodeIds.length ? { qrCodeIds: [...state.qrCodeIds] } : {}),
     ...(state.devices.length ? { devices: [...state.devices] } : {}),
     ...(options.breakdown ? { breakdown: options.breakdown } : {}),
     ...(options.adaptiveTimeline ? { bucket: { kind: 'adaptive' as const, maxPoints: 48 } } : {})

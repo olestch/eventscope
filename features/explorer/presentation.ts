@@ -49,6 +49,7 @@ export const breakdownLabels: Record<ExplorerBreakdown, string> = {
   campaign: 'Campaign',
   channel: 'Channel',
   location: 'Location',
+  qr_code: 'QR code',
   device: 'Device'
 }
 
@@ -119,6 +120,7 @@ const labelFor = (dimension: ExplorerBreakdown, key: string, catalog: ReferenceC
   if (dimension === 'campaign') return catalog.campaigns.find(({ id }) => id === key)?.name ?? key
   if (dimension === 'channel') return catalog.channels.find(({ id }) => id === key)?.name ?? key
   if (dimension === 'location') return catalog.locations.find(({ id }) => id === key)?.name ?? key
+  if (dimension === 'qr_code') return catalog.qrCodes.find(({ id }) => id === key)?.name ?? key
   if (dimension === 'device') return `${key.charAt(0).toUpperCase()}${key.slice(1)}`
   return key
 }
@@ -172,7 +174,7 @@ export function buildBreakdownViewModel(
 
 export interface ActiveFilterChip {
   id: string
-  group: 'campaignIds' | 'channelIds' | 'locationIds' | 'devices'
+  group: 'campaignIds' | 'channelIds' | 'locationIds' | 'qrCodeIds' | 'devices'
   value: string
   label: string
 }
@@ -200,6 +202,11 @@ export function buildActiveFilterChips(
       group: 'locationIds',
       values: state.locationIds,
       label: (value) => catalog.locations.find(({ id }) => id === value)?.name ?? value
+    },
+    {
+      group: 'qrCodeIds',
+      values: state.qrCodeIds,
+      label: (value) => catalog.qrCodes.find(({ id }) => id === value)?.name ?? value
     },
     {
       group: 'devices',
