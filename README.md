@@ -4,11 +4,14 @@ EventScope is a portfolio product concept for exploring event engagement, organi
 
 ## Current status
 
-Phase 5 turns the Explorer into a focused interactive analytics surface:
+Phase 6A deepens the focused Explorer into a visualization-led analytical workflow:
 
 - committed campaign, channel, location, device and UTC date filters serialized into shareable URLs;
 - separate draft filters with deliberate Apply and Reset actions;
 - a dominant Apache ECharts event/QR timeline and ranked categorical breakdown;
+- route-backed drilldown from timeline buckets and additive cross-filtering from breakdown bars;
+- optional previous-period summary comparison using Analytics Core comparison results;
+- a shareable Breakdown/Funnel workspace with a typed page-view → registration → conversion journey;
 - exact semantic table alternatives for every chart;
 - coherent asynchronous publication of summary, timeline and breakdown results;
 - the existing 100K default and explicit 1M showcase profiles.
@@ -52,7 +55,7 @@ CI runs the same application quality gates on pushes and pull requests to `main`
 
 ## Roadmap
 
-Phase 6 can add cross-filtering, funnel/heatmap exploration and richer comparison workflows while reusing the route, gateway and visualization boundaries established here.
+Phase 6B can add a day/hour heatmap and other deliberately scoped exploration depth. Anomaly detection, custom comparison ranges, saved views, QR Studio and Reports remain separate later concerns.
 
 ## Provenance
 

@@ -28,5 +28,9 @@ defineProps<{
     <div>
       <span>Breakdown</span><strong>{{ breakdownLabels[state.breakdown] }}</strong>
     </div>
+    <div>
+      <span>Comparison</span
+      ><strong>{{ state.comparison === 'previous' ? 'Previous period' : 'None' }}</strong>
+    </div>
   </section>
 </template>

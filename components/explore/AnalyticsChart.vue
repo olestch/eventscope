@@ -8,7 +8,9 @@ const props = defineProps<{
   empty: boolean
   emptyMessage: string
   label: string
+  interactive?: boolean
 }>()
+const emit = defineEmits<{ select: [dataIndex: number] }>()
 
 const host = ref<HTMLElement>()
 let chart: AnalyticsChartInstance | undefined
@@ -21,6 +23,11 @@ const renderedOption = () => ({
 })
 
 const update = () => chart?.setOption(renderedOption(), { notMerge: true })
+const handleChartClick = (event: unknown) => {
+  if (!props.interactive || typeof event !== 'object' || event === null) return
+  const dataIndex = (event as { dataIndex?: unknown }).dataIndex
+  if (typeof dataIndex === 'number' && Number.isInteger(dataIndex)) emit('select', dataIndex)
+}
 
 onMounted(async () => {
   if (!host.value) return
@@ -29,6 +36,7 @@ onMounted(async () => {
   if (disposed || !host.value) return
   reducedMotion = prefersReducedMotion()
   chart = initializeAnalyticsChart(host.value)
+  chart.on('click', handleChartClick)
   update()
   if (typeof ResizeObserver !== 'undefined') {
     observer = new ResizeObserver(() => chart?.resize())
@@ -41,12 +49,16 @@ watch(() => props.option, update)
 onBeforeUnmount(() => {
   disposed = true
   observer?.disconnect()
+  chart?.off('click', handleChartClick)
   chart?.dispose()
 })
 </script>
 
 <template>
-  <div class="analytics-chart" :class="{ 'analytics-chart--empty': empty }">
+  <div
+    class="analytics-chart"
+    :class="{ 'analytics-chart--empty': empty, 'analytics-chart--interactive': interactive }"
+  >
     <div ref="host" class="analytics-chart__canvas" :aria-label="label" aria-hidden="true" />
     <p v-if="empty" class="analytics-chart__empty">{{ emptyMessage }}</p>
   </div>

@@ -17,6 +17,10 @@ export const explorerBreakdownMeasures = [
 ] as const
 export type ExplorerBreakdownMeasure = (typeof explorerBreakdownMeasures)[number]
 export type ExplorerDatePreset = '7d' | '30d' | '90d' | 'full'
+export const explorerComparisons = ['none', 'previous'] as const
+export type ExplorerComparison = (typeof explorerComparisons)[number]
+export const explorerViews = ['breakdown', 'funnel'] as const
+export type ExplorerView = (typeof explorerViews)[number]
 
 export interface ExplorerQueryState {
   profile: ExplorerProfile
@@ -28,6 +32,8 @@ export interface ExplorerQueryState {
   devices: DeviceType[]
   breakdown: ExplorerBreakdown
   breakdownMeasure: ExplorerBreakdownMeasure
+  comparison: ExplorerComparison
+  view: ExplorerView
 }
 
 export type ExplorerFilterGroup = keyof Pick<
@@ -91,7 +97,9 @@ export function createDefaultExplorerState(catalog: ReferenceCatalog): ExplorerQ
     locationIds: [],
     devices: [],
     breakdown: 'location',
-    breakdownMeasure: 'sessions'
+    breakdownMeasure: 'sessions',
+    comparison: 'none',
+    view: 'breakdown'
   }
 }
 
@@ -139,7 +147,9 @@ export function normalizeExplorerState(
     breakdown: explorerBreakdowns.includes(state.breakdown) ? state.breakdown : defaults.breakdown,
     breakdownMeasure: explorerBreakdownMeasures.includes(state.breakdownMeasure)
       ? state.breakdownMeasure
-      : defaults.breakdownMeasure
+      : defaults.breakdownMeasure,
+    comparison: explorerComparisons.includes(state.comparison) ? state.comparison : defaults.comparison,
+    view: explorerViews.includes(state.view) ? state.view : defaults.view
   }
 }
 
@@ -162,7 +172,9 @@ export function parseExplorerRoute(
       locationIds: valueFor('locationIds', defaults.locationIds),
       devices: valueFor('devices', defaults.devices) as DeviceType[],
       breakdown: (scalar(query.breakdown) ?? defaults.breakdown) as ExplorerBreakdown,
-      breakdownMeasure: (scalar(query.measure) ?? defaults.breakdownMeasure) as ExplorerBreakdownMeasure
+      breakdownMeasure: (scalar(query.measure) ?? defaults.breakdownMeasure) as ExplorerBreakdownMeasure,
+      comparison: (scalar(query.compare) ?? defaults.comparison) as ExplorerComparison,
+      view: (scalar(query.view) ?? defaults.view) as ExplorerView
     },
     catalog,
     referencePeriod
@@ -175,8 +187,10 @@ export function serializeExplorerState(state: ExplorerQueryState): Record<string
     start: state.startDate,
     end: state.endDate,
     breakdown: state.breakdown,
-    measure: state.breakdownMeasure
+    measure: state.breakdownMeasure,
+    view: state.view
   }
+  if (state.comparison === 'previous') query.compare = 'previous'
   for (const [key, routeKey] of Object.entries(routeKeys) as Array<[keyof typeof routeKeys, string]>) {
     if (state[key].length) query[routeKey] = [...state[key]].sort().join(',')
   }
@@ -213,6 +227,59 @@ export function removeExplorerFilter(
   return next
 }
 
+export interface BreakdownSelectionIntent {
+  dimension: ExplorerBreakdown
+  value: string
+}
+
+export interface TimelinePeriodIntent {
+  start: string
+  end: string
+}
+
+const breakdownFilterGroups: Record<ExplorerBreakdown, ExplorerFilterGroup> = {
+  campaign: 'campaignIds',
+  channel: 'channelIds',
+  location: 'locationIds',
+  device: 'devices'
+}
+
+export function addBreakdownFilter(
+  state: ExplorerQueryState,
+  intent: BreakdownSelectionIntent,
+  catalog: ReferenceCatalog,
+  referencePeriod: TimeRange
+): ExplorerQueryState {
+  const next = cloneExplorerState(state)
+  const group = breakdownFilterGroups[intent.dimension]
+  next[group] = [...next[group], intent.value] as never
+  return normalizeExplorerState(next, catalog, referencePeriod)
+}
+
+export function canDrillIntoTimelinePeriod(intent: TimelinePeriodIntent): boolean {
+  return intent.start.endsWith('T00:00:00.000Z') && intent.end.endsWith('T00:00:00.000Z')
+}
+
+export function drillIntoTimelinePeriod(
+  state: ExplorerQueryState,
+  intent: TimelinePeriodIntent,
+  catalog: ReferenceCatalog,
+  referencePeriod: TimeRange
+): ExplorerQueryState {
+  if (!canDrillIntoTimelinePeriod(intent) || Date.parse(intent.start) >= Date.parse(intent.end)) {
+    return cloneExplorerState(state)
+  }
+  return normalizeExplorerState(
+    {
+      ...cloneExplorerState(state),
+      startDate: utcDatePart(intent.start),
+      endDate: utcDatePart(new Date(Date.parse(intent.end) - 1).toISOString())
+    },
+    catalog,
+    referencePeriod
+  )
+}
+
 export function inclusiveDatesToAnalyticsRange(startDate: string, endDate: string): TimeRange {
   if (!isDateOnly(startDate) || !isDateOnly(endDate) || startDate > endDate) {
     throw new Error('Explorer dates must be valid UTC calendar dates with start before end.')
@@ -237,6 +304,13 @@ export function buildExplorerQuery(
     ...(state.devices.length ? { devices: [...state.devices] } : {}),
     ...(options.breakdown ? { breakdown: options.breakdown } : {}),
     ...(options.adaptiveTimeline ? { bucket: { kind: 'adaptive' as const, maxPoints: 48 } } : {})
+  }
+}
+
+export function buildComparisonQuery(state: ExplorerQueryState, measures: Measure[]): AnalyticsQuery {
+  return {
+    ...buildExplorerQuery(state, measures),
+    comparison: { kind: 'previous_period' }
   }
 }
 

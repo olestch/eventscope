@@ -5,17 +5,17 @@ const principles = [
   {
     number: '01',
     title: 'The route owns the question',
-    text: 'Draft filters become analytical state only after Apply. Committed UTC dates, dimensions, breakdown and dataset profile serialize into one canonical, reloadable URL.'
+    text: 'Manual filters and semantic chart interactions converge on one committed route. UTC dates, dimensions, comparison and active analytical workspace remain canonical and reloadable.'
   },
   {
     number: '02',
     title: 'Results publish together',
-    text: 'Summary, timeline and breakdown share one query generation. The Explorer may retain the previous complete result while pending, but it never combines partial generations.'
+    text: 'Summary, timeline, breakdown, optional comparison and an active funnel share one query generation. The Explorer may retain the previous complete result while pending, but never combines partial generations.'
   },
   {
     number: '03',
-    title: 'Charts present, not calculate',
-    text: 'Pure view-model builders map immutable analytical results to direct modular ECharts options and equivalent semantic tables. Aggregation remains behind the Analytics Gateway.'
+    title: 'Charts emit intent, not analytics',
+    text: 'ECharts events become semantic filter or period intents. Pure view models and equivalent table actions preserve the interaction boundary while aggregation remains behind the Analytics Gateway.'
   },
   {
     number: '04',
@@ -29,13 +29,13 @@ const principles = [
     <PageHeader
       eyebrow="Methodology"
       title="A product shell with explicit evidence boundaries."
-      description="How Phase 5 turns a stable analytics engine into a shareable, accessible product surface."
+      description="How Phase 6A connects observation, route-backed interaction, comparison and funnel exploration."
     />
     <section class="methodology-hero">
       <p class="methodology-hero__quote">
         “A useful analytical product makes the limits of its evidence as legible as the signal.”
       </p>
-      <div><span>Phase</span><strong>05 · Interactive Explorer</strong></div>
+      <div><span>Phase</span><strong>06A · Interactive exploration</strong></div>
     </section>
     <section class="principle-list">
       <article v-for="principle in principles" :key="principle.number">
@@ -55,17 +55,18 @@ const principles = [
         <div>
           <h3>Implemented now</h3>
           <ul>
-            <li>Canonical route-backed filters and UTC date presets</li>
-            <li>Interactive event timeline and ranked breakdown</li>
-            <li>Accessible exact-value tables for every chart</li>
+            <li>Breakdown cross-filtering and timeline period drilldown</li>
+            <li>Route-backed previous-period comparison</li>
+            <li>Ordered session funnel under the committed filter scope</li>
+            <li>Accessible equivalent actions and exact-value tables</li>
             <li>100K default and explicit 1M showcase</li>
           </ul>
         </div>
         <div>
           <h3>Deliberately deferred</h3>
           <ul>
-            <li>Cross-filter, brush and saved-view interactions</li>
-            <li>Funnel, heatmap and advanced comparison UI</li>
+            <li>Day/hour heatmap and chart brushing</li>
+            <li>Custom comparison ranges and saved views</li>
             <li>Anomaly detection and map visualization</li>
             <li>Real QR generation or export</li>
             <li>PDF and presentation generation</li>

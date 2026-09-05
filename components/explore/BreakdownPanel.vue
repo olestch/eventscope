@@ -10,6 +10,7 @@ import {
 import {
   explorerBreakdowns,
   explorerBreakdownMeasures,
+  type BreakdownSelectionIntent,
   type ExplorerBreakdown,
   type ExplorerBreakdownMeasure
 } from '~/features/explorer/queryState'
@@ -18,9 +19,11 @@ const props = defineProps<{
   model: BreakdownViewModel
   breakdown: ExplorerBreakdown
   measure: ExplorerBreakdownMeasure
+  selectedValues: string[]
 }>()
 const emit = defineEmits<{
   change: [selection: { breakdown: ExplorerBreakdown; measure: ExplorerBreakdownMeasure }]
+  filter: [intent: BreakdownSelectionIntent]
 }>()
 const option = computed(() => buildBreakdownChartOption(props.model, false))
 
@@ -34,6 +37,12 @@ const updateMeasure = (event: Event) =>
     breakdown: props.breakdown,
     measure: (event.target as HTMLSelectElement).value as ExplorerBreakdownMeasure
   })
+const filterRow = (index: number) => {
+  const row = props.model.rows[index]
+  if (row && !props.selectedValues.includes(row.key)) {
+    emit('filter', { dimension: props.breakdown, value: row.key })
+  }
+}
 </script>
 
 <template>
@@ -42,7 +51,7 @@ const updateMeasure = (event: Event) =>
       <div>
         <p class="eyebrow">Ranked breakdown</p>
         <h2>{{ model.measureLabel }} by {{ breakdownLabels[model.dimension].toLowerCase() }}</h2>
-        <p>Ranked by the selected measure; exact values follow in the table.</p>
+        <p>Select a bar to add that category to the committed filters.</p>
       </div>
       <div class="breakdown-controls">
         <label>
@@ -68,6 +77,8 @@ const updateMeasure = (event: Event) =>
       :empty="!model.rows.length"
       empty-message="No categories match the committed filters."
       label="Ranked categorical breakdown. Exact values follow in the data table."
+      interactive
+      @select="filterRow"
     />
     <details class="chart-data" open>
       <summary>Breakdown data</summary>
@@ -81,6 +92,7 @@ const updateMeasure = (event: Event) =>
               <th scope="col">Category</th>
               <th scope="col">{{ model.measureLabel }}</th>
               <th scope="col">{{ model.secondaryMeasureLabel }}</th>
+              <th scope="col">Filter</th>
             </tr>
           </thead>
           <tbody>
@@ -88,6 +100,20 @@ const updateMeasure = (event: Event) =>
               <th scope="row">{{ row.label }}</th>
               <td>{{ row.formattedValue }}</td>
               <td>{{ row.formattedSecondary }}</td>
+              <td>
+                <button
+                  class="table-action"
+                  type="button"
+                  :disabled="selectedValues.includes(row.key)"
+                  @click="emit('filter', { dimension: breakdown, value: row.key })"
+                >
+                  {{
+                    selectedValues.includes(row.key)
+                      ? `${row.label} already filtered`
+                      : `Filter to ${row.label}`
+                  }}
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>

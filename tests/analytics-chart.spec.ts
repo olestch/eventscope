@@ -6,6 +6,8 @@ const runtime = vi.hoisted(() => ({
   setOption: vi.fn(),
   resize: vi.fn(),
   dispose: vi.fn(),
+  on: vi.fn(),
+  off: vi.fn(),
   initialize: vi.fn(),
   reducedMotion: vi.fn(() => true)
 }))
@@ -16,6 +18,7 @@ vi.mock('~/services/visualization/echartsRuntime', () => ({
 }))
 
 let resizeCallback: (() => void) | undefined
+let clickCallback: ((event: unknown) => void) | undefined
 const disconnect = vi.fn()
 class ResizeObserverStub {
   constructor(callback: () => void) {
@@ -33,14 +36,20 @@ describe('Analytics chart lifecycle boundary', () => {
     runtime.initialize.mockReturnValue({
       setOption: runtime.setOption,
       resize: runtime.resize,
-      dispose: runtime.dispose
+      dispose: runtime.dispose,
+      on: runtime.on,
+      off: runtime.off
+    })
+    runtime.on.mockImplementation((_event, callback) => {
+      clickCallback = callback
     })
     const wrapper = mount(AnalyticsChart, {
       props: {
         option: { animation: true, series: [] },
         empty: false,
         emptyMessage: 'Nothing here',
-        label: 'Fixture chart'
+        label: 'Fixture chart',
+        interactive: true
       }
     })
     await flushPromises()
@@ -50,10 +59,13 @@ describe('Analytics chart lifecycle boundary', () => {
     })
     await wrapper.setProps({ option: { animation: true, series: [{ type: 'line', data: [1] }] } })
     expect(runtime.setOption).toHaveBeenCalledTimes(2)
+    clickCallback?.({ dataIndex: 3 })
+    expect(wrapper.emitted('select')).toEqual([[3]])
     resizeCallback?.()
     expect(runtime.resize).toHaveBeenCalledOnce()
     wrapper.unmount()
     expect(disconnect).toHaveBeenCalledOnce()
+    expect(runtime.off).toHaveBeenCalledWith('click', expect.any(Function))
     expect(runtime.dispose).toHaveBeenCalledOnce()
   })
 
@@ -61,7 +73,9 @@ describe('Analytics chart lifecycle boundary', () => {
     runtime.initialize.mockReturnValue({
       setOption: runtime.setOption,
       resize: runtime.resize,
-      dispose: runtime.dispose
+      dispose: runtime.dispose,
+      on: runtime.on,
+      off: runtime.off
     })
     const wrapper = mount(AnalyticsChart, {
       props: {

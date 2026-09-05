@@ -3,12 +3,20 @@ import { referenceCatalog } from '~/data/catalog/referenceCatalog'
 import {
   buildBreakdownChartOption,
   buildBreakdownViewModel,
+  buildComparisonViewModel,
+  buildFunnelViewModel,
   buildTimelineChartOption,
   buildTimelineViewModel,
   formatCount,
   formatPercentage
 } from '~/features/explorer/presentation'
-import type { BreakdownResult, TimeSeriesResult } from '~/domain/analytics/contracts'
+import type {
+  BreakdownResult,
+  ComparisonResult,
+  FunnelResult,
+  SummaryResult,
+  TimeSeriesResult
+} from '~/domain/analytics/contracts'
 
 const metadata = {
   datasetId: 'fixture',
@@ -85,5 +93,80 @@ describe('Explorer presentation models', () => {
     )
     expect(timeline.points).toEqual([])
     expect(breakdown.rows).toEqual([])
+  })
+
+  it('presents comparison changes without Infinity or NaN edge cases', () => {
+    const summary = (values: SummaryResult['values'], matchedEventCount: number): SummaryResult => ({
+      kind: 'summary',
+      values,
+      metadata: {
+        ...metadata,
+        matchedEventCount,
+        ...(matchedEventCount === 0 ? { emptyReason: 'no_matching_events' as const } : {})
+      }
+    })
+    const comparison = (
+      current: SummaryResult['values'],
+      previous: SummaryResult['values'],
+      previousEvents: number,
+      deltas: ComparisonResult['deltas']
+    ): ComparisonResult => ({
+      kind: 'comparison',
+      primary: summary(current, 4),
+      comparison: summary(previous, previousEvents),
+      deltas,
+      comparisonDefinition: {
+        kind: 'previous_period',
+        range: { start: '2026-03-02T00:00:00.000Z', end: '2026-03-04T00:00:00.000Z' }
+      }
+    })
+
+    const changed = buildComparisonViewModel(
+      comparison(
+        { events: 0, sessions: 5, conversion_rate: 0.12 },
+        { events: 5, sessions: 0, conversion_rate: 0.1 },
+        5,
+        {
+          events: { absolute: -5, percentage: -100 },
+          sessions: { absolute: 5, percentage: null },
+          conversion_rate: { absolute: 0.02, percentage: 20 }
+        }
+      )
+    )
+    expect(changed.metrics.events?.text).toBe('−100.0% vs previous period')
+    expect(changed.metrics.sessions?.text).toBe('New vs previous period')
+    expect(changed.metrics.conversion_rate?.text).toBe('+20.0% vs previous period')
+    expect(JSON.stringify(changed)).not.toMatch(/Infinity|NaN/)
+
+    const unavailable = buildComparisonViewModel(
+      comparison({ events: 5 }, { events: 0 }, 0, {
+        events: { absolute: 5, percentage: null }
+      })
+    )
+    expect(unavailable.metrics.events?.text).toBe('No previous data')
+  })
+
+  it('builds an exact session-funnel model for zero entrants and zero later progression', () => {
+    const funnel = (sessions: number[]): FunnelResult => ({
+      kind: 'funnel',
+      metadata,
+      steps: ['page_view', 'registration', 'conversion'].map((eventType, index) => ({
+        eventType: eventType as 'page_view' | 'registration' | 'conversion',
+        sessions: sessions[index]!,
+        percentageFromFirst: sessions[0] ? (sessions[index]! / sessions[0]!) * 100 : 0,
+        dropOffFromPrevious:
+          index === 0 || !sessions[index - 1]
+            ? null
+            : ((sessions[index - 1]! - sessions[index]!) / sessions[index - 1]!) * 100
+      }))
+    })
+    const empty = buildFunnelViewModel(funnel([0, 0, 0]))
+    expect(empty.empty).toBe(true)
+    expect(empty.steps[1]?.progressionFromPrevious).toBe('No prior entrants')
+
+    const stopped = buildFunnelViewModel(funnel([10, 4, 0]))
+    expect(stopped.steps.map(({ label }) => label)).toEqual(['Page view', 'Registration', 'Conversion'])
+    expect(stopped.steps[1]).toMatchObject({ progressionFromPrevious: '40.0%', sessions: 4 })
+    expect(stopped.steps[2]).toMatchObject({ progressionFromPrevious: '0.0%', sessions: 0 })
   })
 })

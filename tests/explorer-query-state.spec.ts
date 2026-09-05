@@ -3,9 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { referenceCatalog } from '~/data/catalog/referenceCatalog'
 import { northstarScenarioV1 } from '~/data/scenarios/northstarV1'
 import {
+  addBreakdownFilter,
   applyDatePreset,
+  buildComparisonQuery,
   buildExplorerQuery,
   createDefaultExplorerState,
+  drillIntoTimelinePeriod,
   inclusiveDatesToAnalyticsRange,
   parseExplorerRoute,
   removeExplorerFilter,
@@ -65,6 +68,22 @@ describe('Explorer route query state', () => {
     })
   })
 
+  it('round-trips and canonicalizes comparison and analytical workspace state', () => {
+    const state = parseExplorerRoute(
+      { compare: 'previous', view: 'funnel' },
+      referenceCatalog,
+      referencePeriod
+    )
+    expect(state).toMatchObject({ comparison: 'previous', view: 'funnel' })
+    expect(serializeExplorerState(state)).toMatchObject({ compare: 'previous', view: 'funnel' })
+    expect(
+      parseExplorerRoute({ compare: 'future', view: 'heatmap' }, referenceCatalog, referencePeriod)
+    ).toMatchObject({ comparison: 'none', view: 'breakdown' })
+    expect(buildComparisonQuery(state, ['events']).comparison).toEqual({
+      kind: 'previous_period'
+    })
+  })
+
   it('builds combined filters without manufacturing empty dimensions', () => {
     const state = parseExplorerRoute(
       {
@@ -116,6 +135,60 @@ describe('Explorer route query state', () => {
     ).toEqual(defaults)
   })
 
+  it('maps every breakdown intent to the shared filter state without duplicates', () => {
+    let state = createDefaultExplorerState(referenceCatalog)
+    state = addBreakdownFilter(
+      state,
+      { dimension: 'location', value: 'loc-harbor' },
+      referenceCatalog,
+      referencePeriod
+    )
+    state = addBreakdownFilter(
+      state,
+      { dimension: 'location', value: 'loc-harbor' },
+      referenceCatalog,
+      referencePeriod
+    )
+    state = addBreakdownFilter(
+      state,
+      { dimension: 'channel', value: 'chn-paid' },
+      referenceCatalog,
+      referencePeriod
+    )
+    state = addBreakdownFilter(
+      state,
+      { dimension: 'campaign', value: 'cmp-orbit' },
+      referenceCatalog,
+      referencePeriod
+    )
+    state = addBreakdownFilter(
+      state,
+      { dimension: 'device', value: 'mobile' },
+      referenceCatalog,
+      referencePeriod
+    )
+    expect(state).toMatchObject({
+      campaignIds: ['cmp-northstar', 'cmp-orbit'],
+      channelIds: ['chn-paid'],
+      locationIds: ['loc-harbor'],
+      devices: ['mobile']
+    })
+  })
+
+  it('maps a complete UTC timeline bucket to the exact inclusive UI dates', () => {
+    const state = drillIntoTimelinePeriod(
+      createDefaultExplorerState(referenceCatalog),
+      { start: '2026-03-09T00:00:00.000Z', end: '2026-03-16T00:00:00.000Z' },
+      referenceCatalog,
+      referencePeriod
+    )
+    expect(state).toMatchObject({ startDate: '2026-03-09', endDate: '2026-03-15' })
+    expect(buildExplorerQuery(state, ['events']).range).toEqual({
+      start: '2026-03-09T00:00:00.000Z',
+      end: '2026-03-16T00:00:00.000Z'
+    })
+  })
+
   it('uses campaign-aware fixed-history date presets', () => {
     const state = createDefaultExplorerState(referenceCatalog)
     expect(applyDatePreset(state, '7d', referenceCatalog, referencePeriod)).toMatchObject({
@@ -161,5 +234,45 @@ describe('Explorer route query state', () => {
       ...base,
       channelIds: ['chn-paid']
     })
+  })
+
+  it('restores chart filter, date drilldown and comparison through router history', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/explore', component: { template: '<div />' } }]
+    })
+    const original = createDefaultExplorerState(referenceCatalog)
+    const filtered = addBreakdownFilter(
+      original,
+      { dimension: 'location', value: 'loc-harbor' },
+      referenceCatalog,
+      referencePeriod
+    )
+    const drilled = drillIntoTimelinePeriod(
+      filtered,
+      { start: '2026-03-13T00:00:00.000Z', end: '2026-03-14T00:00:00.000Z' },
+      referenceCatalog,
+      referencePeriod
+    )
+    const compared = { ...drilled, comparison: 'previous' as const }
+    for (const state of [original, filtered, drilled, compared]) {
+      await router.push({ path: '/explore', query: serializeExplorerState(state) })
+    }
+
+    router.back()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(
+      parseExplorerRoute(router.currentRoute.value.query, referenceCatalog, referencePeriod)
+    ).toEqual(drilled)
+    router.back()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(
+      parseExplorerRoute(router.currentRoute.value.query, referenceCatalog, referencePeriod)
+    ).toEqual(filtered)
+    router.forward()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(
+      parseExplorerRoute(router.currentRoute.value.query, referenceCatalog, referencePeriod)
+    ).toEqual(drilled)
   })
 })

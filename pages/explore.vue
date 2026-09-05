@@ -7,6 +7,7 @@ import ExplorerFilterPanel from '~/components/explore/ExplorerFilterPanel.vue'
 import ExplorerQueryContext from '~/components/explore/ExplorerQueryContext.vue'
 import ExplorerSummary from '~/components/explore/ExplorerSummary.vue'
 import ExplorerToolbar from '~/components/explore/ExplorerToolbar.vue'
+import FunnelPanel from '~/components/explore/FunnelPanel.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
 import StatePanel from '~/components/ui/StatePanel.vue'
 import { useExplorerController } from '~/composables/useExplorerController'
@@ -136,15 +137,46 @@ async function resetFilters() {
       <p v-if="explorer.pending.value" class="pending-result-note">
         Showing the previous complete result while the committed query updates.
       </p>
-      <EventTimeline :model="explorer.timelineModel.value" />
-      <section class="explorer-supporting-grid">
+      <EventTimeline :model="explorer.timelineModel.value" @drilldown="explorer.drillIntoTimeline" />
+      <ExplorerSummary
+        :result="explorer.results.value.summary"
+        :comparison="explorer.comparisonModel.value"
+        :comparison-mode="explorer.committed.value.comparison"
+        @comparison="explorer.selectComparison"
+      />
+      <section class="analytical-workspace" aria-labelledby="workspace-title">
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow">Analytical workspace</p>
+            <h2 id="workspace-title">Inspect the shape behind the signal</h2>
+          </div>
+          <div class="workspace-switch" role="group" aria-label="Analytical workspace view">
+            <button
+              type="button"
+              :aria-pressed="explorer.committed.value.view === 'breakdown'"
+              @click="explorer.selectView('breakdown')"
+            >
+              Breakdown
+            </button>
+            <button
+              type="button"
+              :aria-pressed="explorer.committed.value.view === 'funnel'"
+              @click="explorer.selectView('funnel')"
+            >
+              Funnel
+            </button>
+          </div>
+        </header>
         <BreakdownPanel
+          v-if="explorer.results.value.state.view === 'breakdown'"
           :model="explorer.breakdownModel.value"
-          :breakdown="explorer.committed.value.breakdown"
-          :measure="explorer.committed.value.breakdownMeasure"
+          :breakdown="explorer.results.value.state.breakdown"
+          :measure="explorer.results.value.state.breakdownMeasure"
+          :selected-values="explorer.selectedBreakdownValues.value"
           @change="explorer.selectBreakdown"
+          @filter="explorer.crossFilterBreakdown"
         />
-        <ExplorerSummary :result="explorer.results.value.summary" />
+        <FunnelPanel v-else-if="explorer.funnelModel.value" :model="explorer.funnelModel.value" />
       </section>
     </main>
   </div>

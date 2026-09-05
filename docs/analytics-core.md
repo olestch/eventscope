@@ -44,11 +44,13 @@ The local Worker demonstrates main-thread isolation, typed asynchronous communic
 
 ## Explorer query and visualization boundary
 
-The URL owns committed Explorer state: profile, inclusive UTC dates, campaign/channel/location/device filters, breakdown and measure. A separate draft state changes only when the user applies it. Parsing validates catalog IDs, clamps dates to the fixed reference period, removes duplicates and serializes arrays in stable order. The inclusive UI end date is converted to the Analytics Core's exclusive next-day boundary.
+The URL owns committed Explorer state: profile, inclusive UTC dates, campaign/channel/location/device filters, breakdown, measure, previous-period comparison and the active Breakdown/Funnel workspace. A separate draft state changes only when the user applies it. Parsing validates catalog IDs, clamps dates to the fixed reference period, removes duplicates and serializes arrays in stable order. The inclusive UI end date is converted to the Analytics Core's exclusive next-day boundary.
 
-One Explorer coordinator issues summary, adaptive time-series and breakdown requests for a monotonically increasing query generation. It publishes only a complete result set from the current generation. Previous complete results may remain visible with an explicit pending label, but partial generations are never combined.
+One Explorer coordinator issues summary, adaptive time-series and breakdown requests for a monotonically increasing query generation. Previous-period mode substitutes the gateway comparison result's primary summary and publishes its comparison in the same atomic set. The configured session funnel is requested only while the Funnel workspace is active, but then participates in that same query generation. Previous complete results may remain visible with an explicit pending label; partial or stale generations are never combined.
 
-Aggregated results are converted into immutable timeline and breakdown view models. Direct modular Apache ECharts renders a canvas line chart and horizontal bars; semantic HTML tables contain the same exact values. ECharts owns no analytical aggregation or filtering. The selected modules provide responsive resizing, precise tooltips and a future path to Phase 6 interactions without a Vue-specific wrapper; the Apache-2.0 license is compatible with the repository.
+Aggregated results are converted into immutable timeline, breakdown, comparison and funnel view models. Direct modular Apache ECharts renders a canvas line chart and horizontal bars; semantic HTML tables contain the same exact values and equivalent drilldown/filter actions. ECharts click payloads terminate inside the chart boundary and become semantic bucket/category intents before the controller updates the canonical route. ECharts owns no analytical aggregation or router state.
+
+Previous-period ranges are calculated by Analytics Core as the equal-duration half-open range immediately before the primary range. Zero baselines remain `null` percentage deltas and the presentation layer distinguishes `New`, `No previous data`, unchanged and finite percentage changes. The product funnel is typed configuration (`page_view → registration → conversion`); Analytics Core performs its ordered, session-deduplicated execution under the same committed filters.
 
 ## Storage decision
 

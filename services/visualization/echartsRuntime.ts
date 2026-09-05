@@ -9,6 +9,8 @@ export interface AnalyticsChartInstance {
   setOption: EChartsType['setOption']
   resize: EChartsType['resize']
   dispose: EChartsType['dispose']
+  on: EChartsType['on']
+  off: EChartsType['off']
 }
 
 export const initializeAnalyticsChart = (element: HTMLElement): AnalyticsChartInstance => init(element)

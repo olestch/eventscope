@@ -5,6 +5,8 @@ import { northstarScenarioV1 } from '~/data/scenarios/northstarV1'
 import {
   buildActiveFilterChips,
   buildBreakdownViewModel,
+  buildComparisonViewModel,
+  buildFunnelViewModel,
   buildTimelineViewModel,
   formatCount
 } from '~/features/explorer/presentation'
@@ -14,21 +16,27 @@ import {
   type ExplorerResultSet
 } from '~/features/explorer/queryCoordinator'
 import {
+  addBreakdownFilter,
   applyDatePreset,
   cloneExplorerState,
   createDefaultExplorerState,
+  drillIntoTimelinePeriod,
   normalizeExplorerState,
   parseExplorerRoute,
   removeExplorerFilter,
   routeQuerySignature,
   serializeExplorerState,
   utcDatePart,
+  type BreakdownSelectionIntent,
   type ExplorerBreakdown,
   type ExplorerBreakdownMeasure,
+  type ExplorerComparison,
   type ExplorerDatePreset,
   type ExplorerProfile,
   type ExplorerQueryState,
-  type ExplorerRouteQuery
+  type ExplorerRouteQuery,
+  type ExplorerView,
+  type TimelinePeriodIntent
 } from '~/features/explorer/queryState'
 import { SupersededAnalyticsRequestError } from '~/services/analytics/AnalyticsGateway'
 
@@ -68,6 +76,22 @@ export function useExplorerController() {
         )
       : undefined
   )
+  const comparisonModel = computed(() =>
+    results.value?.comparison ? buildComparisonViewModel(results.value.comparison) : undefined
+  )
+  const funnelModel = computed(() =>
+    results.value?.funnel ? buildFunnelViewModel(results.value.funnel) : undefined
+  )
+  const selectedBreakdownValues = computed(() => {
+    const state = results.value?.state ?? committed.value
+    const groups = {
+      campaign: state.campaignIds,
+      channel: state.channelIds,
+      location: state.locationIds,
+      device: state.devices
+    }
+    return [...groups[state.breakdown]]
+  })
   const noResults = computed(() => results.value?.summary.metadata.matchedEventCount === 0)
   const pending = computed(() => queryPending.value || analytics.state.status === 'generating')
   const scopeLabel = computed(() => {
@@ -177,6 +201,22 @@ export function useExplorerController() {
     })
   }
 
+  function crossFilterBreakdown(intent: BreakdownSelectionIntent) {
+    commitState(addBreakdownFilter(committed.value, intent, analytics.catalog, referencePeriod))
+  }
+
+  function drillIntoTimeline(intent: TimelinePeriodIntent) {
+    commitState(drillIntoTimelinePeriod(committed.value, intent, analytics.catalog, referencePeriod))
+  }
+
+  function selectComparison(comparison: ExplorerComparison) {
+    commitState({ ...cloneExplorerState(committed.value), comparison })
+  }
+
+  function selectView(view: ExplorerView) {
+    commitState({ ...cloneExplorerState(committed.value), view })
+  }
+
   function selectDatePreset(preset: ExplorerDatePreset) {
     draft.value = applyDatePreset(draft.value, preset, analytics.catalog, referencePeriod)
   }
@@ -198,6 +238,9 @@ export function useExplorerController() {
     results,
     timelineModel,
     breakdownModel,
+    comparisonModel,
+    funnelModel,
+    selectedBreakdownValues,
     activeFilterChips,
     activeMetadata,
     dateBounds,
@@ -213,6 +256,10 @@ export function useExplorerController() {
     removeFilter,
     selectProfile,
     selectBreakdown,
+    crossFilterBreakdown,
+    drillIntoTimeline,
+    selectComparison,
+    selectView,
     selectDatePreset,
     retry,
     openFilters: () => {

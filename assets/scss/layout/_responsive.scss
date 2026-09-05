@@ -31,9 +31,6 @@
   .date-filter {
     grid-column: 1 / -1;
   }
-  .explorer-supporting-grid {
-    grid-template-columns: 1fr;
-  }
   .explorer-summary {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -210,6 +207,22 @@
   }
   .explorer-summary article {
     min-height: 100px;
+  }
+  .summary-section,
+  .funnel-panel {
+    padding: 20px 16px;
+  }
+  .summary-section__header,
+  .workspace-header {
+    display: grid;
+  }
+  .comparison-switch,
+  .workspace-switch {
+    width: 100%;
+  }
+  .comparison-switch button,
+  .workspace-switch button {
+    flex: 1;
   }
   .pending-result-note {
     position: static;

@@ -1,10 +1,19 @@
 import type { EChartsCoreOption } from 'echarts/core'
-import type { BreakdownResult, Measure, TimeSeriesResult } from '~/domain/analytics/contracts'
-import type { ReferenceCatalog } from '~/domain/events/models'
 import type {
-  ExplorerBreakdown,
-  ExplorerBreakdownMeasure,
-  ExplorerQueryState
+  BreakdownResult,
+  ComparisonResult,
+  FunnelResult,
+  Measure,
+  TimeSeriesResult
+} from '~/domain/analytics/contracts'
+import type { ReferenceCatalog } from '~/domain/events/models'
+import { primaryConversionFunnel } from '~/features/explorer/productFunnel'
+import {
+  canDrillIntoTimelinePeriod,
+  explorerBreakdownMeasures,
+  type ExplorerBreakdown,
+  type ExplorerBreakdownMeasure,
+  type ExplorerQueryState
 } from '~/features/explorer/queryState'
 
 const integerFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
@@ -52,6 +61,8 @@ export function formatMeasure(value: number, measure: Measure): string {
 export interface TimelineViewPoint {
   label: string
   rangeLabel: string
+  range: { start: string; end: string }
+  drillable: boolean
   events: number
   qrScans: number
 }
@@ -67,6 +78,8 @@ export function buildTimelineViewModel(result: TimeSeriesResult): TimelineViewMo
     points: result.points.map((point) => ({
       label: formatDate(point.range.start),
       rangeLabel: formatBucketRange(point.range.start, point.range.end),
+      range: { ...point.range },
+      drillable: canDrillIntoTimelinePeriod(point.range),
       events: point.values.events ?? 0,
       qrScans: point.values.qr_scans ?? 0
     }))
@@ -192,7 +205,7 @@ export function buildTimelineChartOption(
         const index = parameters[0]?.dataIndex ?? 0
         const point = model.points[index]
         return point
-          ? `<strong>${point.rangeLabel}</strong><br/>Events: ${formatCount(point.events)}<br/>QR scans: ${formatCount(point.qrScans)}`
+          ? `<strong>${point.rangeLabel}</strong><br/>Events: ${formatCount(point.events)}<br/>QR scans: ${formatCount(point.qrScans)}${point.drillable ? '<br/><em>Click to explore this period</em>' : ''}`
           : ''
       }
     },
@@ -215,6 +228,7 @@ export function buildTimelineChartOption(
         symbol: 'circle',
         showSymbol: model.points.length < 32,
         lineStyle: { width: 3 },
+        cursor: model.points.some(({ drillable }) => drillable) ? 'pointer' : 'default',
         areaStyle: { opacity: 0.12 },
         data: model.points.map(({ events }) => events)
       },
@@ -224,6 +238,7 @@ export function buildTimelineChartOption(
         symbol: 'diamond',
         showSymbol: model.points.length < 32,
         lineStyle: { width: 2, type: 'dashed' },
+        cursor: model.points.some(({ drillable }) => drillable) ? 'pointer' : 'default',
         data: model.points.map(({ qrScans }) => qrScans)
       }
     ]
@@ -244,7 +259,7 @@ export function buildBreakdownChartOption(
         const index = tooltipParameters(value)[0]?.dataIndex ?? 0
         const row = model.rows[index]
         return row
-          ? `<strong>${row.label}</strong><br/>${model.measureLabel}: ${row.formattedValue}`
+          ? `<strong>${row.label}</strong><br/>${model.measureLabel}: ${row.formattedValue}<br/><em>Click to add this filter</em>`
           : ''
       }
     },
@@ -269,6 +284,7 @@ export function buildBreakdownChartOption(
       {
         name: model.measureLabel,
         type: 'bar',
+        cursor: 'pointer',
         barMaxWidth: 22,
         data: model.rows.map(({ value }) => value),
         label: {
@@ -281,5 +297,108 @@ export function buildBreakdownChartOption(
         itemStyle: { borderRadius: [0, 5, 5, 0] }
       }
     ]
+  }
+}
+
+export type ComparisonDisplayState = 'change' | 'new' | 'no_previous' | 'unchanged'
+
+export interface ComparisonMetricView {
+  measure: ExplorerBreakdownMeasure
+  state: ComparisonDisplayState
+  text: string
+  direction: 'up' | 'down' | 'neutral'
+}
+
+export interface ComparisonViewModel {
+  rangeLabel: string
+  metrics: Partial<Record<ExplorerBreakdownMeasure, ComparisonMetricView>>
+}
+
+const formatSignedDelta = (value: number): string =>
+  `${value > 0 ? '+' : value < 0 ? '−' : ''}${Math.abs(value).toFixed(1)}%`
+
+export function buildComparisonViewModel(result: ComparisonResult): ComparisonViewModel {
+  const metrics: ComparisonViewModel['metrics'] = {}
+  const noPreviousData = result.comparison.metadata.matchedEventCount === 0
+  for (const measure of explorerBreakdownMeasures) {
+    const current = result.primary.values[measure] ?? 0
+    const previous = result.comparison.values[measure] ?? 0
+    const percentage = result.deltas[measure]?.percentage ?? null
+    let metric: ComparisonMetricView
+    if (noPreviousData) {
+      metric = { measure, state: 'no_previous', text: 'No previous data', direction: 'neutral' }
+    } else if (previous === 0 && current > 0) {
+      metric = { measure, state: 'new', text: 'New vs previous period', direction: 'up' }
+    } else if (percentage === null || percentage === 0) {
+      metric = {
+        measure,
+        state: 'unchanged',
+        text: 'No change vs previous period',
+        direction: 'neutral'
+      }
+    } else {
+      metric = {
+        measure,
+        state: 'change',
+        text: `${formatSignedDelta(percentage)} vs previous period`,
+        direction: percentage > 0 ? 'up' : 'down'
+      }
+    }
+    metrics[measure] = metric
+  }
+  return {
+    rangeLabel: formatBucketRange(
+      result.comparisonDefinition.range.start,
+      result.comparisonDefinition.range.end
+    ),
+    metrics
+  }
+}
+
+export interface FunnelStepView {
+  eventType: string
+  label: string
+  sessions: number
+  formattedSessions: string
+  percentageFromFirst: string
+  progressionFromPrevious: string
+  dropOffFromPrevious: string
+  width: number
+}
+
+export interface FunnelViewModel {
+  name: string
+  description: string
+  empty: boolean
+  steps: FunnelStepView[]
+}
+
+export function buildFunnelViewModel(result: FunnelResult): FunnelViewModel {
+  return {
+    name: primaryConversionFunnel.name,
+    description: primaryConversionFunnel.description,
+    empty: (result.steps[0]?.sessions ?? 0) === 0,
+    steps: result.steps.map((step, index) => {
+      const previous = result.steps[index - 1]?.sessions
+      const progression = index === 0 ? undefined : previous ? (step.sessions / previous) * 100 : null
+      return {
+        eventType: step.eventType,
+        label: primaryConversionFunnel.stepLabels[step.eventType],
+        sessions: step.sessions,
+        formattedSessions: formatCount(step.sessions),
+        percentageFromFirst: `${step.percentageFromFirst.toFixed(1)}%`,
+        progressionFromPrevious:
+          index === 0
+            ? 'Entrants'
+            : progression == null
+              ? 'No prior entrants'
+              : `${progression.toFixed(1)}%`,
+        dropOffFromPrevious:
+          step.dropOffFromPrevious === null
+            ? '—'
+            : `${Math.max(0, step.dropOffFromPrevious).toFixed(1)}%`,
+        width: Math.max(step.sessions ? step.percentageFromFirst : 0, 2)
+      }
+    })
   }
 }
