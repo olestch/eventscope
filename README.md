@@ -4,7 +4,18 @@ EventScope is a portfolio product concept for exploring event engagement, organi
 
 ## Current status
 
-Phase 8 restores deterministic Scenario QR alongside the browser-local QR Library and connects those tracked demo identities to Explorer:
+Phase 9 adds a backend-compatible Reports workflow around the same URL-backed `AnalyticsQuery` used by Explorer:
+
+- typed `CreateReportRequest`, `ReportJob` and narrow `ReportsGateway` contracts;
+- deterministic session-only `DemoReportsGateway` lifecycle from queued through processing to ready;
+- a controlled failed demo job with explicit retry into a new attempt;
+- report title, PDF format, analytics scope and selectable existing analytics sections;
+- structural configuration preview with human-readable catalog metadata and no duplicate analytics;
+- Explorer → Reports navigation that preserves campaign, channel, location, device, Scenario QR, date and breakdown scope;
+- a 2.4 KB static sample PDF proving the ready/download contract without a browser PDF engine;
+- compact recent-job history that is intentionally neither persisted nor presented as cloud state.
+
+The QR product area continues to provide:
 
 - typed campaign context and visual configuration kept separate from historical QR facts;
 - absolute HTTPS destination validation and immediate matrix-backed SVG preview;
@@ -43,6 +54,7 @@ Charts use direct modular Apache ECharts 6 integration—line/bar/heatmap, toolt
 
 See [Analytics Core](docs/analytics-core.md) for the execution boundary and measure semantics.
 See [QR Studio](docs/qr-studio.md) for rendering, validation, export and production boundaries.
+See [Reports](docs/reports.md) for request contracts, demo lifecycle and backend-owned generation.
 
 ## Local development
 
@@ -71,7 +83,7 @@ CI runs the same application quality gates on pushes and pull requests to `main`
 
 ## Roadmap
 
-Tracked redirect creation, analytics ingestion for user-saved QR, cloud persistence, Reports, anomaly detection, recurring weekday/hour filters and saved views remain separate later concerns.
+Tracked redirect creation, analytics ingestion for user-saved QR, cloud persistence, real report services, anomaly detection, recurring weekday/hour filters and saved views remain separate later concerns.
 
 ## Provenance
 

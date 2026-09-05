@@ -1,46 +1,47 @@
-import type { ReportDefinition } from '~/domain/reports/models'
+import type { ReportSection } from '~/domain/reports/models'
 
-export const reportCatalog: ReportDefinition[] = [
+export interface ReportSectionOption {
+  id: ReportSection
+  title: string
+  summary: string
+}
+
+// Phase 1's deterministic narrative definitions remain catalog data even though
+// Phase 9 replaces their placeholder UI with real report-job orchestration.
+export const reportCatalog = [
+  { id: 'report-northstar-week-one', campaignId: 'cmp-northstar' },
+  { id: 'report-activation-notes', campaignId: 'cmp-northstar' }
+] as const
+
+export const reportSectionOptions: ReportSectionOption[] = [
   {
-    id: 'report-northstar-week-one',
-    name: 'Northstar launch pulse',
-    campaignId: 'cmp-northstar',
-    status: 'Ready',
-    period: '04–10 Mar 2026',
-    owner: 'Maya Chen',
-    sections: [
-      {
-        id: 'overview',
-        title: 'Executive overview',
-        summary: 'Attendance and scan signals across all launch locations.'
-      },
-      {
-        id: 'locations',
-        title: 'Location comparison',
-        summary: 'A structured comparison of Harbor, Riverfront and Summit.'
-      },
-      {
-        id: 'next',
-        title: 'Next actions',
-        summary: 'Questions for the event team to validate in the next cycle.'
-      }
-    ]
+    id: 'executive_summary',
+    title: 'Executive summary',
+    summary: 'Headline sessions, conversions, conversion rate and QR scan measures.'
   },
   {
-    id: 'report-activation-notes',
-    name: 'Activation working notes',
-    campaignId: 'cmp-northstar',
-    status: 'Draft',
-    period: '04–18 Mar 2026',
-    owner: 'Theo Grant',
-    sections: [
-      {
-        id: 'overview',
-        title: 'Working summary',
-        summary: 'A draft structure awaiting reviewed findings.'
-      }
-    ]
+    id: 'timeline',
+    title: 'Timeline',
+    summary: 'The selected scope over time using the existing analytics definitions.'
+  },
+  {
+    id: 'breakdown',
+    title: 'Breakdown',
+    summary: 'A ranked view of the selected Explorer breakdown dimension.'
+  },
+  {
+    id: 'funnel',
+    title: 'Funnel',
+    summary: 'The established page view to registration to conversion journey.'
+  },
+  {
+    id: 'temporal_heatmap',
+    title: 'Temporal heatmap',
+    summary: 'Monday-first UTC weekday and hour activity distribution.'
+  },
+  {
+    id: 'qr_performance',
+    title: 'QR performance',
+    summary: 'Scenario QR performance, either filtered or broken down across the scope.'
   }
 ]
-
-export const getReportDefinition = (id: string) => reportCatalog.find((report) => report.id === id)

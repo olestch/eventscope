@@ -1,33 +1,33 @@
 <script setup lang="ts">
-import type { ReportDefinition } from '~/domain/reports/models'
+import type { AnalyticsQuery } from '~/domain/analytics/contracts'
+import type { ReferenceCatalog } from '~/domain/events/models'
+import type { ReportSection } from '~/domain/reports/models'
+import { buildReportScope, reportSectionLabel } from '~/features/reports/presentation'
 
-defineProps<{ report: ReportDefinition }>()
+defineProps<{
+  title: string
+  query: AnalyticsQuery
+  sections: ReportSection[]
+  catalog: ReferenceCatalog
+}>()
 </script>
 
 <template>
-  <article class="report-document">
-    <header class="report-document__cover">
-      <div>
-        <p class="eyebrow">EventScope / Field intelligence</p>
-        <h2>{{ report.name }}</h2>
-        <p>{{ report.period }}</p>
+  <article class="report-structure-preview" aria-labelledby="report-preview-title">
+    <p class="eyebrow">Configuration preview</p>
+    <h2 id="report-preview-title">{{ title || 'Untitled report' }}</h2>
+    <p>This outline describes the requested backend document. It is not a rendered PDF preview.</p>
+    <h3>Scope</h3>
+    <dl class="report-scope-list">
+      <div v-for="item in buildReportScope(query, catalog)" :key="item.label">
+        <dt>{{ item.label }}</dt>
+        <dd>{{ item.value }}</dd>
       </div>
-      <div class="report-monogram" aria-hidden="true">NS</div>
-    </header>
-    <section class="report-kpi-row" aria-label="Report highlights">
-      <div><span>12,480</span><small>Event visits</small></div>
-      <div><span>3,323</span><small>QR scans</small></div>
-      <div><span>26.6%</span><small>Scan rate</small></div>
-    </section>
-    <section v-for="(section, index) in report.sections" :key="section.id" class="report-section">
-      <span class="report-section__number">0{{ index + 1 }}</span>
-      <div>
-        <h3>{{ section.title }}</h3>
-        <p>{{ section.summary }}</p>
-      </div>
-    </section>
-    <footer class="report-document__footer">
-      <span>Fictional demonstration data</span><span>Prepared by {{ report.owner }}</span>
-    </footer>
+    </dl>
+    <h3>Sections</h3>
+    <ol class="report-outline">
+      <li v-for="section in sections" :key="section">{{ reportSectionLabel(section) }}</li>
+    </ol>
+    <p v-if="!sections.length" class="report-preview-empty">Select at least one section.</p>
   </article>
 </template>

@@ -294,17 +294,19 @@
   .qr-canvas {
     width: min(100%, 360px);
   }
-  .report-card {
-    grid-template-columns: 60px minmax(0, 1fr);
-    gap: 14px;
-    padding: 18px;
+  .reports-intro,
+  .report-history__heading,
+  .report-job-card__header {
+    align-items: flex-start;
+    flex-direction: column;
   }
-  .report-card__index {
-    width: 54px;
-    height: 66px;
+  .report-job-card__actions,
+  .report-job-card__actions .button {
+    width: 100%;
   }
-  .report-card__arrow {
-    display: none;
+  .report-scope-list div {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
   .methodology-hero {
     grid-template-columns: 1fr;
@@ -316,19 +318,6 @@
   }
   .scope-columns {
     grid-template-columns: 1fr;
-  }
-  .report-document__cover {
-    min-height: 220px;
-  }
-  .report-monogram {
-    width: 48px;
-    height: 48px;
-  }
-  .report-kpi-row {
-    grid-template-columns: 1fr;
-  }
-  .report-document__footer {
-    flex-direction: column;
   }
 }
 
@@ -352,9 +341,6 @@
   .filter-panel__actions {
     flex-direction: column-reverse;
   }
-  .report-card {
-    grid-template-columns: 1fr;
-  }
   .qr-color-group,
   .qr-context-list,
   .qr-export-actions {
@@ -362,10 +348,6 @@
   }
   .qr-export-actions .button--ghost {
     grid-column: auto;
-  }
-  .report-card__index {
-    width: 100%;
-    height: 48px;
   }
 }
 

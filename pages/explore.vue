@@ -12,6 +12,7 @@ import TemporalHeatmapPanel from '~/components/explore/TemporalHeatmapPanel.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
 import StatePanel from '~/components/ui/StatePanel.vue'
 import { useExplorerController } from '~/composables/useExplorerController'
+import { reportLocationForExplorerState } from '~/features/reports/routeState'
 
 useHead({ title: 'Explore' })
 const explorer = useExplorerController()
@@ -47,7 +48,14 @@ async function resetFilters() {
       eyebrow="Explorer"
       title="Follow the signal. Refine the question."
       description="A route-backed analytical workspace for exploring real event volume, QR engagement and conversion context."
-    />
+      ><template #actions>
+        <NuxtLink
+          class="button button--secondary"
+          :to="reportLocationForExplorerState(explorer.committed.value)"
+          >Create report</NuxtLink
+        >
+      </template></PageHeader
+    >
 
     <ExplorerToolbar
       ref="toolbar"

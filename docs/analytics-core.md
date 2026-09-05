@@ -98,3 +98,10 @@ These are engineering diagnostics from one machine, not portable product-perform
 Run `npm run benchmark:analytics` for the columnar 10K/100K/1M suite. Set `EVENTSCOPE_BENCH_ENGINE=reference` and select smaller profiles with `EVENTSCOPE_BENCH_PROFILES` when reproducing the before baseline. Benchmarks are deliberately excluded from normal CI.
 
 Generation remains seeded and uses the same scenario logic for every profile. Session generation now streams into the event collection, and fingerprinting incrementally applies the existing stable hash rather than constructing one giant serialized string. Full integrity validation remains enabled for all generated profiles.
+
+## Reports reuse
+
+Phase 9 places this same `AnalyticsQuery` inside `CreateReportRequest`. Reports route state delegates
+to Explorer normalization and query construction rather than defining new filter semantics. The
+configuration preview is structural and makes no `AnalyticsGateway` request, so editing a report
+title or section list cannot trigger 100K/1M recomputation.

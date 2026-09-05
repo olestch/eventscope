@@ -24,8 +24,13 @@ const principles = [
   },
   {
     number: '05',
+    title: 'Report generation belongs behind a gateway',
+    text: 'Reports reuse the normalized AnalyticsQuery, then submit a typed request to a deterministic demo gateway. The UI models asynchronous jobs and downloads without rendering a user-specific PDF in the browser.'
+  },
+  {
+    number: '06',
     title: 'The demo boundary is explicit',
-    text: 'The self-contained portfolio uses a Worker-backed analytics gateway and a local QR editor. Production services could replace those edges without moving business rules into Vue.'
+    text: 'The self-contained portfolio uses a Worker-backed analytics gateway, a local QR editor and an in-memory Reports adapter. Production services could replace those edges without moving business rules into Vue.'
   }
 ]
 </script>
@@ -40,7 +45,7 @@ const principles = [
       <p class="methodology-hero__quote">
         “A useful analytical product makes the limits of its evidence as legible as the signal.”
       </p>
-      <div><span>Phase</span><strong>08 · QR analytics</strong></div>
+      <div><span>Phase</span><strong>09 · Reports workflow</strong></div>
     </section>
     <section class="principle-list">
       <article v-for="principle in principles" :key="principle.number">
@@ -71,6 +76,8 @@ const principles = [
             <li>Typed URL, contrast, quiet-zone and logo validation</li>
             <li>Versioned browser-local QR repository and saved-asset CRUD</li>
             <li>Read-only Scenario QR connected to URL-backed Explorer analytics</li>
+            <li>Typed asynchronous report jobs using the same AnalyticsQuery scope</li>
+            <li>Structural report preview and real static demo PDF download</li>
           </ul>
         </div>
         <div>
@@ -80,7 +87,7 @@ const principles = [
             <li>Custom comparison ranges and saved views</li>
             <li>Anomaly detection and map visualization</li>
             <li>Tracked redirects, cloud persistence and analytics for user-saved QR</li>
-            <li>PDF and presentation generation</li>
+            <li>Backend report rendering, storage, signed delivery and audit history</li>
           </ul>
         </div>
       </div>
