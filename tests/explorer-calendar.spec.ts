@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import ExplorerDatePicker from '~/components/explore/ExplorerDatePicker.vue'
+import { testI18n } from '~/tests/setup'
 
 const mountPicker = (value = '2026-03-04') =>
   mount(ExplorerDatePicker, {
@@ -23,6 +24,20 @@ describe('Explorer calendar', () => {
     expect(wrapper.text()).toContain('March 2026')
     expect(wrapper.findAll('[role="gridcell"]')).toHaveLength(42)
     wrapper.unmount()
+  })
+
+  it('localizes calendar labels and date formatting in Russian', async () => {
+    await testI18n.global.setLocale('ru')
+    try {
+      const wrapper = mountPicker()
+      await wrapper.get('.date-picker__trigger').trigger('click')
+      expect(wrapper.get('[role="dialog"]').attributes('aria-label')).toBe('Календарь: Start')
+      expect(wrapper.text()).toContain('март 2026')
+      expect(wrapper.text()).toContain('Пн')
+      wrapper.unmount()
+    } finally {
+      await testI18n.global.setLocale('en')
+    }
   })
 
   it('keeps adjacent-month days selectable and marks selection and today independently', async () => {

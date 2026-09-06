@@ -9,7 +9,7 @@ Analytics Gateway
         ↓
 Deterministic EventDataset semantics
         ↓
-Phase 3 reference Analytics Core
+Reference Analytics Core
         ↓
 Compiled columnar AnalyticsStorage
         ↓
@@ -28,7 +28,7 @@ Both engines apply the same UTC half-open ranges (`[start, end)`), filter rules,
 
 The Explorer depends on the promise-based `AnalyticsGateway` contract. Dataset initialization, queries and typed results cross that boundary; presentation components do not know about `postMessage`, correlation IDs or Worker protocol messages.
 
-The portfolio/demo deployment is intentionally self-contained:
+The portfolio deployment is intentionally self-contained:
 
 ```text
 Vue Explorer → Analytics Gateway → Web Worker → columnar runtime → local deterministic dataset
@@ -46,7 +46,7 @@ The local Worker demonstrates main-thread isolation, typed asynchronous communic
 
 The URL owns committed Explorer state: profile, inclusive UTC dates, campaign/channel/location/Scenario-QR/device filters, breakdown measure, temporal measure, previous-period comparison and the active Breakdown/Funnel/Temporal workspace. A separate draft state changes only when the user applies it. Parsing validates catalog IDs, clamps dates to the fixed reference period, removes duplicates and serializes arrays in stable order. The inclusive UI end date is converted to the Analytics Core's exclusive next-day boundary.
 
-`qrCodeIds` is an ordinary multi-value analytical dimension: OR within QR and AND against every other selected dimension. It was already part of the reference engine, columnar dictionary storage and runtime compiler before the Phase 8 presentation integration. A QR-filtered funnel first identifies sessions from matching deterministic QR scans, then evaluates the configured ordered journey from that scan onward without requiring downstream facts to repeat `qrCodeId`. Summary, timeline, breakdown, comparison and temporal results use the same established QR-attribution and conversion-rate semantics. Worker and Gateway operations need no QR-specific methods because each already accepts `AnalyticsQuery`.
+`qrCodeIds` is an ordinary multi-value analytical dimension: OR within QR and AND against every other selected dimension. It is implemented by the reference engine, columnar dictionary storage and runtime compiler. A QR-filtered funnel first identifies sessions from matching deterministic QR scans, then evaluates the configured ordered journey from that scan onward without requiring downstream facts to repeat `qrCodeId`. Summary, timeline, breakdown, comparison and temporal results use the same established QR-attribution and conversion-rate semantics. Worker and Gateway operations need no QR-specific methods because each already accepts `AnalyticsQuery`.
 
 One Explorer coordinator issues summary, adaptive time-series and breakdown requests for a monotonically increasing query generation. Previous-period mode substitutes the gateway comparison result's primary summary and publishes its comparison in the same atomic set. The configured session funnel is requested only while the Funnel workspace is active. Likewise, the temporal aggregate is one lazy operation requested only for `view=temporal`; its complete 168-cell result participates in the same atomic generation. Previous complete results may remain visible with an explicit pending label; partial or stale generations are never combined.
 
@@ -82,7 +82,7 @@ Every request and response has a numeric correlation ID and a discriminated type
 
 ## Local benchmark evidence
 
-The storage choice was based on the Phase 3 object-record engine measured before optimization. Representative p50 values from Windows x64 / Node 24.15.0 were:
+The storage choice was based on the object-record reference engine measured before optimization. Representative p50 values from Windows x64 / Node 24.15.0 were:
 
 | Profile | Representation    |     Summary |   Breakdown |  Time series |
 | ------- | ----------------- | ----------: | ----------: | -----------: |
@@ -101,7 +101,7 @@ Generation remains seeded and uses the same scenario logic for every profile. Se
 
 ## Reports reuse
 
-Phase 9 places this same `AnalyticsQuery` inside `CreateReportRequest`. Reports route state delegates
+Reports place this same `AnalyticsQuery` inside `CreateReportRequest`. Reports route state delegates
 to Explorer normalization and query construction rather than defining new filter semantics. The
 configuration preview is structural and makes no `AnalyticsGateway` request, so editing a report
 title or section list cannot trigger 100K/1M recomputation.

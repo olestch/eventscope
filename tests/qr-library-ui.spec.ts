@@ -82,17 +82,27 @@ describe('QR Library UI', () => {
     })
   })
 
-  it('duplicates and requires an explicit confirmation before deletion', async () => {
-    const wrapper = mountLibrary(memoryRepository([base]))
+  it('duplicates and manages confirmation focus before deletion', async () => {
+    const host = document.createElement('div')
+    document.body.append(host)
+    const wrapper = mount(QrLibraryView, {
+      attachTo: host,
+      props: { repository: memoryRepository([base]) },
+      global: { stubs: { NuxtLink: RouterLinkStub } }
+    })
     await flushPromises()
     await wrapper.get('button:nth-of-type(1)').trigger('click')
     await flushPromises()
     expect(wrapper.text()).toContain(`${base.name} copy`)
     const deleteButtons = wrapper.findAll('button').filter((button) => button.text() === 'Delete')
     await deleteButtons[0]!.trigger('click')
-    expect(wrapper.get('[role="alertdialog"]').text()).toContain('Confirm delete')
+    const dialog = wrapper.get('[role="alertdialog"]')
+    expect(dialog.attributes()).toMatchObject({ 'aria-modal': 'true' })
+    expect(dialog.text()).toContain('Confirm delete')
+    expect(document.activeElement?.textContent).toContain('Cancel')
     await wrapper.get('[role="alertdialog"] .button--ghost').trigger('click')
     expect(wrapper.find('[role="alertdialog"]').exists()).toBe(false)
+    expect(document.activeElement?.textContent).toContain('Delete')
     await wrapper
       .findAll('button')
       .find((button) => button.text() === 'Delete')!
@@ -100,6 +110,28 @@ describe('QR Library UI', () => {
     await wrapper.get('[role="alertdialog"] .button--danger').trigger('click')
     await flushPromises()
     expect(wrapper.text()).not.toContain(`${base.name} copy`)
+    expect(document.activeElement?.textContent).toBe('Saved QR')
+    wrapper.unmount()
+    host.remove()
+  })
+
+  it('closes delete confirmation with Escape and restores its trigger', async () => {
+    const host = document.createElement('div')
+    document.body.append(host)
+    const wrapper = mount(QrLibraryView, {
+      attachTo: host,
+      props: { repository: memoryRepository([base]) },
+      global: { stubs: { NuxtLink: RouterLinkStub } }
+    })
+    await flushPromises()
+    const trigger = wrapper.findAll('button').find((button) => button.text() === 'Delete')!
+    await trigger.trigger('click')
+    await wrapper.get('[role="alertdialog"]').trigger('keydown', { key: 'Escape' })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[role="alertdialog"]').exists()).toBe(false)
+    expect(document.activeElement).toBe(trigger.element)
+    wrapper.unmount()
+    host.remove()
   })
 
   it('renders repository failures as actionable errors', async () => {

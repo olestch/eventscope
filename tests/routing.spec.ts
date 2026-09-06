@@ -24,6 +24,6 @@ describe('Nuxt route surface', () => {
   })
 
   it('provides a global error view for unknown routes', () => {
-    expect(readFileSync(resolve('error.vue'), 'utf8')).toContain('Page not found')
+    expect(readFileSync(resolve('error.vue'), 'utf8')).toContain("t('errors.pageNotFound')")
   })
 })

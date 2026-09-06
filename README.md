@@ -1,71 +1,100 @@
 # EventScope
 
-EventScope is a portfolio product concept for exploring event engagement, organizing tracked QR touchpoints, and composing decision-ready reports. The current fictional product story centers on **Northstar Launch**.
+EventScope is an event-intelligence studio for exploring engagement, connecting deterministic Scenario QR identities to analytics, designing browser-local QR assets and composing asynchronous report jobs. It is a fictional, self-contained portfolio product built without customer data or commercial source code.
 
-## Current status
+Its pure TypeScript reference semantics are differentially tested against a columnar runtime that executes deterministic datasets of up to one million events in a Web Worker. The same application shell demonstrates canonical QR rendering, typed report jobs and a persistent English/Russian UI.
 
-Phase 9.5 refines the exploration foundation without adding a new product area:
+## Product areas
 
-- the versioned deterministic scenario gives all six campaigns useful analytics and distinct channel, device and conversion stories;
-- Northstar keeps its launch spike, Harbor Hall strength and mobile Safari degradation narrative;
-- the native date control is replaced by a dependency-free English calendar designed for the EventScope dark UI;
-- opening Filters by pointer leaves date controls closed and unfocused, while keyboard entry may focus the neutral panel boundary;
-- inclusive UTC dates, fixed-history presets, URL restoration and Analytics Core half-open ranges remain unchanged.
+- **Explorer** — URL-backed filters, summary metrics, previous-period comparison, timeline and categorical drilldown, an ordered session funnel, and a UTC weekday × hour heatmap with explainable aggregate insights.
+- **QR Studio** — deterministic matrix-backed SVG rendering, readability guidance, a versioned local repository, saved-asset CRUD, and SVG/PNG export through one canonical renderer.
+- **Reports** — a typed asynchronous job workflow that reuses Explorer's normalized analytical scope and demonstrates queued, processing, ready, failed and retry states.
+- **Methodology** — an in-product account of semantic choices and the boundary between demonstrated frontend behavior and production-owned services.
 
-Phase 9 adds a backend-compatible Reports workflow around the same URL-backed `AnalyticsQuery` used by Explorer:
+## Technology
 
-- typed `CreateReportRequest`, `ReportJob` and narrow `ReportsGateway` contracts;
-- deterministic session-only `DemoReportsGateway` lifecycle from queued through processing to ready;
-- a controlled failed demo job with explicit retry into a new attempt;
-- report title, PDF format, analytics scope and selectable existing analytics sections;
-- structural configuration preview with human-readable catalog metadata and no duplicate analytics;
-- Explorer → Reports navigation that preserves campaign, channel, location, device, Scenario QR, date and breakdown scope;
-- a 2.4 KB static sample PDF proving the ready/download contract without a browser PDF engine;
-- compact recent-job history that is intentionally neither persisted nor presented as cloud state.
+Nuxt 3, Vue 3, TypeScript, `@nuxtjs/i18n`, SCSS, Apache ECharts 6, Web Workers, TypedArrays, Vitest and Vue Test Utils. The application uses client rendering (`ssr: false`): it is a data-intensive application shell with no server-owned data or SEO requirement, so no server functionality exists solely to justify Nuxt.
 
-The QR product area continues to provide:
+## Technical highlights
 
-- typed campaign context and visual configuration kept separate from historical QR facts;
-- absolute HTTPS destination validation and immediate matrix-backed SVG preview;
-- square, rounded and dot modules with restrained finder, color, gradient and logo controls;
-- deterministic contrast, quiet-zone and logo-coverage guidance;
-- SVG export from the canonical preview and 1024 × 1024 client-side PNG rasterization;
-- create, reopen, update, duplicate, export and confirmed-delete workflows behind a typed `QrRepository`;
-- a versioned, defensively validated `LocalStorageQrRepository` with explicit local-only semantics;
-- clean separation between user-saved QR codes and immutable scenario QR definitions.
-- read-only Scenario QR cards with canonical previews, export and URL-backed analytics navigation;
-- QR filters and QR breakdowns flowing through the existing Gateway, Worker and Analytics Core.
+- A pure TypeScript Analytics Core defines filtering, distinct counts, conversion eligibility, adaptive UTC bucketing, funnels, comparisons and continuous temporal results independently of Nuxt, Vue, Workers and charts.
+- A typed `AnalyticsGateway` separates Vue from Worker protocol details. The Worker owns deterministic generation, columnar compilation and analytics execution.
+- The URL is the canonical committed Explorer query; draft controls apply deliberately and Back, Forward or reload restore the same analytical question.
+- A generation coordinator publishes related results atomically. Superseded responses cannot mix old summary, timeline, breakdown, funnel or heatmap data with a newer query.
+- Direct modular ECharts imports are loaded only when a chart mounts. Every chart has an exact semantic table alternative, and presentation models perform no raw-event aggregation.
+- QR preview, Library export, SVG download and PNG rasterization all consume the same deterministic SVG renderer.
+- Saved QR configuration and immutable Scenario QR analytics identities are intentionally different domain concepts.
+- English and Russian share one unprefixed route surface. Locale preference is restored locally; dates, numbers and accessibility labels are localized at the presentation boundary while analytics queries, QR artifacts and report contracts remain language-neutral.
 
-The Explorer continues to provide:
+## Architecture
 
-- committed campaign, channel, location, Scenario QR, device and UTC date filters serialized into shareable URLs;
-- separate draft filters with deliberate Apply and Reset actions;
-- a dominant Apache ECharts event/QR timeline and ranked categorical breakdown;
-- route-backed drilldown from timeline buckets and additive cross-filtering from breakdown bars;
-- optional previous-period summary comparison using Analytics Core comparison results;
-- a shareable Breakdown/Funnel/Temporal workspace with a typed page-view → registration → conversion journey;
-- a Monday-first weekday × hour heatmap with explicit UTC `[hour, next hour)` semantics;
-- deterministic, explainable temporal insights derived only from the returned aggregate;
-- exact semantic table alternatives for every chart;
-- coherent asynchronous publication of summary, timeline and breakdown results;
-- the existing 100K default and explicit 1M showcase profiles.
+```text
+Explorer route + controls
+          │ normalized AnalyticsQuery
+          ▼
+Vue presentation ──► AnalyticsGateway ──► Web Worker
+                                              │
+                         deterministic dataset + columnar storage
+                                              │
+                                              ▼
+                                   pure Analytics Core runtime
+```
 
-Browser Back/Forward and direct URL reload restore the committed query, including one or multiple Scenario QR IDs. Existing complete results remain visibly marked while a newer query is pending; partial result generations are never mixed. Saved QR assets contain configuration only: Studio editing and persistence never mutate the deterministic analytics dataset or claim scan analytics.
+```text
+QR Studio draft ──► validation ──► QR matrix ──► canonical SVG
+                                                       ├─ preview
+                                                       ├─ SVG export
+                                                       └─ PNG rasterization
 
-## Architecture boundaries
+Saved QR ──► typed QrRepository ──► versioned browser localStorage
+Scenario QR ──► deterministic catalog identity ──► Explorer filter
+```
 
-Nuxt runs in client-rendered mode (`ssr: false`) because EventScope is a data-intensive application shell without server-owned data or an SEO requirement. No server functionality exists solely to justify the framework.
+Reports place the same normalized `AnalyticsQuery` inside a typed request:
 
-Vue depends on an `AnalyticsGateway`, not Worker protocol details. In this self-contained portfolio demo the gateway uses the Phase 4 Worker, columnar runtime and deterministic local dataset. A production implementation could provide the same boundary through an HTTP analytics API and backend event store; sending one million source events to a browser is not presented as a production SaaS recommendation.
+```text
+Reports UI ──► ReportsGateway ──► asynchronous job contract
+```
 
-Charts use direct modular Apache ECharts 6 integration—line/bar/heatmap, tooltip, grid, visual scale, legend and canvas modules only. Analytics results are mapped into immutable presentation models before chart options are built; no aggregation happens in the visualization layer. The heatmap is one lazy Gateway/Worker operation that returns all 168 cells. Its small insight rule set is deterministic and thresholded; it is not ML, statistical significance or anomaly detection. No universal indexes, cache, `SharedArrayBuffer`, backend or server-owned analytics were added.
+The included adapter is deterministic and session-only. A production adapter would call a backend report service; it would not move report generation into Vue.
 
-See [Analytics Core](docs/analytics-core.md) for the execution boundary and measure semantics.
-See [Deterministic dataset](docs/dataset.md) for campaign narratives, fingerprints and date interpretation.
-See [QR Studio](docs/qr-studio.md) for rendering, validation, export and production boundaries.
-See [Reports](docs/reports.md) for request contracts, demo lifecycle and backend-owned generation.
+## Demo and production boundary
 
-## Local development
+| Demonstrated locally                                         | Production-owned boundary                                 |
+| ------------------------------------------------------------ | --------------------------------------------------------- |
+| Seeded fictional event generation and fingerprints           | Authenticated event ingestion and durable storage         |
+| Worker-backed analytics over 100K or 1M events               | Analytics API and warehouse/event store                   |
+| Browser-local saved QR configuration                         | Accounts, shared persistence and cloud sync               |
+| Direct HTTPS QR destination and Scenario QR analytics        | Tracked redirects, scan ingestion and attribution service |
+| Session-only report jobs and one clearly labelled sample PDF | Backend rendering, protected storage and signed delivery  |
+| Deterministic temporal rules over aggregates                 | Statistical anomaly detection or forecasting              |
+| Browser-local English/Russian UI preference                  | Localized backend content where explicitly supported      |
+
+The 1M profile is an explicit showcase of the local architecture, not a recommendation to ship one million source events to a production browser client.
+
+Localization applies to application presentation. User-authored values and generated or backend-owned artifacts are not automatically translated.
+
+## Analytics semantics
+
+- Engine ranges are UTC half-open intervals: `[start, end)`. The calendar presents inclusive UTC dates and converts the selected end day to the next exclusive midnight.
+- Filters are OR within one dimension and AND across dimensions.
+- Sessions and visitors are counted distinctly. Conversions are deduplicated by eligible session; conversion rate divides converted sessions by eligible page-view/QR sessions.
+- Funnels evaluate ordered events within a session. Previous-period comparison uses the equal-duration interval immediately before the primary range; a zero baseline yields no percentage delta.
+- Temporal results always contain the complete Monday-first 7 × 24 topology, including explicit zero cells.
+
+## Performance evidence
+
+`npm run benchmark:analytics` runs a local diagnostic over the 10K development, 100K standard and 1M showcase profiles. It records generation, compilation, analytical-column size and warm-query p50/p95 for summary, filtered and QR-filtered queries, breakdown, timeline, temporal heatmap, funnel and comparison. The suite has no CI timing threshold because results vary by hardware and runtime; the measurements are engineering evidence, not portable performance claims.
+
+The fixed-width analytical columns use 40 bytes per event: approximately 3.81 MiB at 100K and 38.15 MiB at 1M, plus small dictionaries. The chart runtime is a separate lazy chunk; the production build reports it independently from initial route code.
+
+One Windows x64 / Node 24.15.0 run generated the 1M dataset in about 5.36 s, compiled it in 1.01 s and observed approximately 255 MiB of heap growth during generation. Warm-query p50 values were 395 ms for summary, 30 ms for QR-filtered summary, 807 ms for breakdown, 797 ms for time series, 612 ms for funnel and 1.13 s for the complete 168-cell heatmap. Treat these figures as a reproducible local snapshot, not a product SLA.
+
+Detailed runtime decisions and reproducible historical measurements are in [docs/analytics-core.md](docs/analytics-core.md).
+
+## Run locally
+
+Node `>=24.15.0 <25` is required; CI uses Node 24.15.0.
 
 ```bash
 nvm use
@@ -73,7 +102,7 @@ npm ci
 npm run dev
 ```
 
-Node `>=24.15.0 <25` is required and CI uses Node 24.15.0.
+Open the URL printed by Nuxt. The default Explorer loads the standard 100K profile; choose **Showcase · 1M events** deliberately from the dataset control.
 
 ## Quality checks
 
@@ -83,20 +112,29 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npm run benchmark:analytics
 git diff --check
 ```
 
-Run `npm run benchmark:analytics` for the separate local 10K/100K/1M diagnostic suite. It has no CI timing threshold and is not a product-performance claim.
+Vitest covers domain semantics, differential reference/runtime behavior, Worker and Gateway lifecycle, stale-response protection, route restoration, presentation models, QR persistence/rendering/export, Reports jobs, translation-catalog parity, locale persistence and language-neutral domain output. CI runs the non-benchmark application gates for pushes and pull requests to `main`.
 
-CI runs the same application quality gates on pushes and pull requests to `main`.
+## Code tour
 
-## Roadmap
+- [`domain/analytics`](domain/analytics) — semantic contracts, reference engine, columnar storage and equivalent runtime.
+- [`workers`](workers) and [`services/analytics`](services/analytics) — typed protocol, lifecycle and application gateway.
+- [`features/explorer`](features/explorer) — route normalization, result coordination and presentation models.
+- [`features/qr`](features/qr), [`domain/qr`](domain/qr) and [`services/qr`](services/qr) — QR domain, canonical rendering, local repository and exports.
+- [`domain/reports`](domain/reports) and [`services/reports`](services/reports) — asynchronous report contracts and deterministic demo adapter.
+- [`i18n`](i18n), [`plugins/locale.client.ts`](plugins/locale.client.ts) and [`docs/localization.md`](docs/localization.md) — bilingual presentation resources, local preference restore and the locale-neutral domain boundary.
+- [`docs`](docs) — dataset, analytics, QR and reporting architecture notes.
 
-Tracked redirect creation, analytics ingestion for user-saved QR, cloud persistence, real report services, anomaly detection, recurring weekday/hour filters and saved views remain separate later concerns.
+## Screenshots
+
+The strongest portfolio captures are the Explorer timeline at 100K, the 1M temporal heatmap, QR Studio with Center Mark enabled, the local QR Library, and a ready report job. Capture them from a production build at desktop and mobile widths so route state, local-only labels and responsive behavior remain visible; no static screenshots are committed to avoid presenting stale UI.
 
 ## Provenance
 
-All campaigns, venues, people, source events, and presentation values are fictional. The repository contains no commercial code or customer data.
+All campaigns, venues, people, source events and presentation values are fictional. The repository contains no customer data, secrets, private URLs or commercial code.
 
 ## License
 

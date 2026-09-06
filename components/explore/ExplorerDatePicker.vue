@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 type CalendarView = 'days' | 'months' | 'years'
 
@@ -11,6 +12,7 @@ const props = defineProps<{
   maximum: string
 }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
+const { locale, rt, t, tm } = useI18n()
 
 const root = ref<HTMLElement>()
 const trigger = ref<HTMLButtonElement>()
@@ -19,21 +21,32 @@ const view = ref<CalendarView>('days')
 const focusedDate = ref(props.modelValue)
 const visibleMonth = ref(monthStart(props.modelValue))
 
-const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' })
-const fullDateFormatter = new Intl.DateTimeFormat('en-US', {
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-  timeZone: 'UTC'
-})
-const accessibleDateFormatter = new Intl.DateTimeFormat('en-US', {
-  weekday: 'long',
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-  timeZone: 'UTC'
-})
+const intlLocale = computed(() => (locale.value === 'ru' ? 'ru-RU' : 'en-US'))
+const weekdays = computed(() =>
+  (tm('calendar.weekdays') as Array<Parameters<typeof rt>[0]>).map((message) => rt(message))
+)
+const monthFormatter = computed(
+  () => new Intl.DateTimeFormat(intlLocale.value, { month: 'long', timeZone: 'UTC' })
+)
+const fullDateFormatter = computed(
+  () =>
+    new Intl.DateTimeFormat(intlLocale.value, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'UTC'
+    })
+)
+const accessibleDateFormatter = computed(
+  () =>
+    new Intl.DateTimeFormat(intlLocale.value, {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'UTC'
+    })
+)
 
 function parseDate(value: string): Date {
   return new Date(`${value}T00:00:00.000Z`)
@@ -79,13 +92,13 @@ function clamp(value: string): string {
 const visibleDate = computed(() => parseDate(visibleMonth.value))
 const visibleYear = computed(() => visibleDate.value.getUTCFullYear())
 const visibleMonthIndex = computed(() => visibleDate.value.getUTCMonth())
-const heading = computed(() => `${monthFormatter.format(visibleDate.value)} ${visibleYear.value}`)
-const triggerLabel = computed(() => fullDateFormatter.format(parseDate(props.modelValue)))
+const heading = computed(() => `${monthFormatter.value.format(visibleDate.value)} ${visibleYear.value}`)
+const triggerLabel = computed(() => fullDateFormatter.value.format(parseDate(props.modelValue)))
 const decadeStart = computed(() => Math.floor(visibleYear.value / 10) * 10)
 const monthOptions = computed(() =>
   Array.from({ length: 12 }, (_, month) => ({
     month,
-    label: monthFormatter.format(new Date(Date.UTC(visibleYear.value, month, 1))),
+    label: monthFormatter.value.format(new Date(Date.UTC(visibleYear.value, month, 1))),
     disabled:
       dateOnly(new Date(Date.UTC(visibleYear.value, month + 1, 0))) < props.minimum ||
       dateOnly(new Date(Date.UTC(visibleYear.value, month, 1))) > props.maximum
@@ -265,13 +278,13 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', handleOutsideP
       v-if="open"
       class="calendar-popover"
       role="dialog"
-      :aria-label="`${label} calendar`"
+      :aria-label="t('calendar.calendar', { label })"
       @keydown.esc.stop.prevent="closeCalendar()"
     >
       <header class="calendar-header">
         <button
           type="button"
-          :aria-label="view === 'days' ? 'Previous month' : 'Previous year range'"
+          :aria-label="t(view === 'days' ? 'calendar.previousMonth' : 'calendar.previousYears')"
           @click="navigate(-1)"
         >
           ‹
@@ -283,7 +296,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', handleOutsideP
         <strong v-else>{{ decadeStart }}–{{ decadeStart + 9 }}</strong>
         <button
           type="button"
-          :aria-label="view === 'days' ? 'Next month' : 'Next year range'"
+          :aria-label="t(view === 'days' ? 'calendar.nextMonth' : 'calendar.nextYears')"
           @click="navigate(1)"
         >
           ›

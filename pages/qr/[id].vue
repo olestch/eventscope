@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import QrEditorShell from '~/components/qr/QrEditorShell.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
 import StatePanel from '~/components/ui/StatePanel.vue'
@@ -7,19 +8,20 @@ import type { SavedQrCode } from '~/domain/qr/library'
 import { createBrowserQrRepository } from '~/services/qr/LocalStorageQrRepository'
 
 const route = useRoute()
+const { t } = useI18n()
 const repository = createBrowserQrRepository()
 const saved = ref<SavedQrCode>()
 const loading = ref(true)
 const error = ref('')
-const title = computed(() => saved.value?.name || 'Saved QR asset')
+const title = computed(() => saved.value?.name || t('head.qrSaved'))
 useHead({ title })
 
 onMounted(async () => {
   try {
     saved.value = (await repository.get(String(route.params.id))) ?? undefined
-    if (!saved.value) error.value = 'This QR is not saved in this browser.'
+    if (!saved.value) error.value = t('qr.studio.savedMissing')
   } catch (caught) {
-    error.value = caught instanceof Error ? caught.message : 'The QR could not be loaded.'
+    error.value = caught instanceof Error ? caught.message : t('qr.studio.savedLoadError')
   } finally {
     loading.value = false
   }
@@ -31,23 +33,25 @@ onMounted(async () => {
     <StatePanel
       v-if="loading"
       state="loading"
-      title="Loading saved QR"
-      description="Reading this asset from local browser storage."
+      :title="t('qr.studio.loadingSaved')"
+      :description="t('qr.studio.loadingSavedDescription')"
     />
     <template v-else-if="saved">
       <PageHeader
-        eyebrow="QR studio / Saved asset"
+        :eyebrow="t('qr.studio.savedEyebrow')"
         :title="saved.name"
-        description="Edit and export this browser-local QR. Analytics scenario data remains separate."
+        :description="t('qr.studio.savedDescription')"
       >
         <template #actions
-          ><NuxtLink class="button button--ghost" to="/qr">Back to library</NuxtLink></template
+          ><NuxtLink class="button button--ghost" to="/qr">{{
+            t('qr.studio.backLibrary')
+          }}</NuxtLink></template
         >
       </PageHeader>
       <QrEditorShell :repository="repository" :saved="saved" @saved="saved = $event" />
     </template>
-    <StatePanel v-else state="error" title="QR asset unavailable" :description="error">
-      <NuxtLink class="button button--primary" to="/qr">Return to library</NuxtLink>
+    <StatePanel v-else state="error" :title="t('qr.studio.assetUnavailable')" :description="error">
+      <NuxtLink class="button button--primary" to="/qr">{{ t('qr.studio.returnLibrary') }}</NuxtLink>
     </StatePanel>
   </div>
 </template>

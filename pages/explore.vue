@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ActiveFilterChips from '~/components/explore/ActiveFilterChips.vue'
 import BreakdownPanel from '~/components/explore/BreakdownPanel.vue'
 import EventTimeline from '~/components/explore/EventTimeline.vue'
@@ -14,7 +15,8 @@ import StatePanel from '~/components/ui/StatePanel.vue'
 import { useExplorerController } from '~/composables/useExplorerController'
 import { reportLocationForExplorerState } from '~/features/reports/routeState'
 
-useHead({ title: 'Explore' })
+const { t } = useI18n()
+useHead(() => ({ title: t('head.explorer') }))
 const explorer = useExplorerController()
 const filterPanel = ref<InstanceType<typeof ExplorerFilterPanel>>()
 const toolbar = ref<InstanceType<typeof ExplorerToolbar>>()
@@ -47,14 +49,14 @@ async function resetFilters() {
 <template>
   <div class="page explorer-page">
     <PageHeader
-      eyebrow="Explorer"
-      title="Follow the signal. Refine the question."
-      description="A route-backed analytical workspace for exploring real event volume, QR engagement and conversion context."
+      :eyebrow="t('explorer.eyebrow')"
+      :title="t('explorer.title')"
+      :description="t('explorer.description')"
       ><template #actions>
         <NuxtLink
           class="button button--secondary"
           :to="reportLocationForExplorerState(explorer.committed.value)"
-          >Create report</NuxtLink
+          >{{ t('explorer.createReport') }}</NuxtLink
         >
       </template></PageHeader
     >
@@ -92,7 +94,7 @@ async function resetFilters() {
       v-if="explorer.committed.value.qrCodeIds.length"
       class="explorer-qr-back text-action"
       to="/qr"
-      >Back to QR Library</NuxtLink
+      >{{ t('explorer.backQr') }}</NuxtLink
     >
     <ActiveFilterChips
       :chips="explorer.activeFilterChips.value"
@@ -112,9 +114,9 @@ async function resetFilters() {
       <template v-if="explorer.analyticsState.status === 'generating'">
         {{
           {
-            preparing: 'Preparing the analytical runtime',
-            generating: 'Generating the deterministic dataset',
-            optimizing: 'Optimizing analytical storage'
+            preparing: t('explorer.progress.preparing'),
+            generating: t('explorer.progress.generating'),
+            optimizing: t('explorer.progress.optimizing')
           }[explorer.analyticsState.progressStage || 'preparing']
         }}.
       </template>
@@ -124,36 +126,38 @@ async function resetFilters() {
     <StatePanel
       v-if="!explorer.results.value && explorer.pending.value"
       state="loading"
-      title="Preparing the Explorer"
-      description="The analytical gateway is preparing a complete summary, timeline and breakdown. Navigation remains responsive."
+      :title="t('explorer.states.preparingTitle')"
+      :description="t('explorer.states.preparingDescription')"
     />
     <StatePanel
       v-else-if="!explorer.results.value && explorer.queryError.value"
       state="error"
-      title="Analytics could not start"
+      :title="t('explorer.states.errorTitle')"
       :description="explorer.queryError.value"
     >
       <button class="button button--primary" type="button" @click="explorer.retry">
-        Retry analytics
+        {{ t('explorer.retryAnalytics') }}
       </button>
     </StatePanel>
     <StatePanel
       v-else-if="explorer.noResults.value"
       state="no-results"
-      title="No events match these filters"
-      description="The query completed successfully. Remove an active filter or reset the Explorer to the Northstar default."
+      :title="t('explorer.states.noResultsTitle')"
+      :description="t('explorer.states.noResultsDescription')"
     >
-      <button class="button button--primary" type="button" @click="explorer.reset">Reset filters</button>
+      <button class="button button--primary" type="button" @click="explorer.reset">
+        {{ t('explorer.states.resetFilters') }}
+      </button>
     </StatePanel>
 
-    <main
+    <section
       v-else-if="explorer.results.value && explorer.timelineModel.value && explorer.breakdownModel.value"
       class="explorer-results"
       :class="{ 'explorer-results--pending': explorer.pending.value }"
       :aria-busy="explorer.pending.value"
     >
       <p v-if="explorer.pending.value" class="pending-result-note">
-        Showing the previous complete result while the committed query updates.
+        {{ t('explorer.previousResult') }}
       </p>
       <EventTimeline :model="explorer.timelineModel.value" @drilldown="explorer.drillIntoTimeline" />
       <ExplorerSummary
@@ -165,30 +169,30 @@ async function resetFilters() {
       <section class="analytical-workspace" aria-labelledby="workspace-title">
         <header class="workspace-header">
           <div>
-            <p class="eyebrow">Analytical workspace</p>
-            <h2 id="workspace-title">Inspect the shape behind the signal</h2>
+            <p class="eyebrow">{{ t('explorer.analyticalWorkspace') }}</p>
+            <h2 id="workspace-title">{{ t('explorer.inspectShape') }}</h2>
           </div>
-          <div class="workspace-switch" role="group" aria-label="Analytical workspace view">
+          <div class="workspace-switch" role="group" :aria-label="t('explorer.workspaceView')">
             <button
               type="button"
               :aria-pressed="explorer.committed.value.view === 'breakdown'"
               @click="explorer.selectView('breakdown')"
             >
-              Breakdown
+              {{ t('explorer.breakdown') }}
             </button>
             <button
               type="button"
               :aria-pressed="explorer.committed.value.view === 'funnel'"
               @click="explorer.selectView('funnel')"
             >
-              Funnel
+              {{ t('explorer.funnel') }}
             </button>
             <button
               type="button"
               :aria-pressed="explorer.committed.value.view === 'temporal'"
               @click="explorer.selectView('temporal')"
             >
-              Temporal
+              {{ t('explorer.temporal') }}
             </button>
           </div>
         </header>
@@ -209,6 +213,6 @@ async function resetFilters() {
           @measure="explorer.selectTemporalMeasure"
         />
       </section>
-    </main>
+    </section>
   </div>
 </template>

@@ -31,7 +31,7 @@ describe('QR Studio UI', () => {
     const original = wrapper.get('.qr-canvas img').attributes('src')
     await wrapper.get('input[name="module-style"][value="dots"]').setValue(true)
     expect(wrapper.get('.qr-canvas img').attributes('src')).not.toBe(original)
-    await wrapper.get('input[aria-label="Background color"]').setValue('#ffffff')
+    await wrapper.findAll('.qr-color-group input[type="color"]')[1]!.setValue('#ffffff')
     await wrapper.get('.toggle-row input[type="checkbox"]').setValue(false)
     expect(wrapper.text()).toContain('#ffffff')
     await wrapper.get('.qr-export-actions .button--ghost').trigger('click')

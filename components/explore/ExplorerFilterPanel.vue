@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ExplorerDatePicker from '~/components/explore/ExplorerDatePicker.vue'
 import type { DeviceType, ReferenceCatalog } from '~/domain/events/models'
 import {
@@ -21,6 +22,7 @@ const emit = defineEmits<{
   close: []
   preset: [preset: ExplorerDatePreset]
 }>()
+const { t } = useI18n()
 
 const panel = ref<HTMLElement>()
 defineExpose({ focusPanel: () => panel.value?.focus() })
@@ -44,7 +46,7 @@ const toggle = (
   } as ExplorerQueryState)
 }
 
-const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${device.slice(1)}`
+const deviceLabel = (device: DeviceType) => t(`explorer.devices.${device}`)
 </script>
 
 <template>
@@ -52,7 +54,7 @@ const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${
     <button
       class="filter-surface__scrim"
       type="button"
-      aria-label="Close filters"
+      :aria-label="t('explorer.filterPanel.close')"
       @click="emit('close')"
     />
     <aside
@@ -65,13 +67,13 @@ const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${
     >
       <header class="filter-panel__header">
         <div>
-          <p class="eyebrow">Draft query</p>
-          <h2 id="filter-panel-title">Filters</h2>
+          <p class="eyebrow">{{ t('explorer.filterPanel.draft') }}</p>
+          <h2 id="filter-panel-title">{{ t('explorer.filters') }}</h2>
         </div>
         <button
           class="filter-panel__close"
           type="button"
-          aria-label="Close filters"
+          :aria-label="t('explorer.filterPanel.close')"
           @click="emit('close')"
         >
           ×
@@ -80,10 +82,13 @@ const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${
 
       <div class="filter-panel__content">
         <fieldset class="date-filter">
-          <legend>Date range <small>inclusive, UTC</small></legend>
+          <legend>
+            {{ t('explorer.filterPanel.dateRange') }}
+            <small>{{ t('explorer.filterPanel.inclusiveUtc') }}</small>
+          </legend>
           <ExplorerDatePicker
             id="explorer-start-date"
-            label="Start"
+            :label="t('explorer.filterPanel.start')"
             :model-value="draft.startDate"
             :minimum="dateBounds.minimum"
             :maximum="dateBounds.maximum"
@@ -91,26 +96,30 @@ const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${
           />
           <ExplorerDatePicker
             id="explorer-end-date"
-            label="End"
+            :label="t('explorer.filterPanel.end')"
             :model-value="draft.endDate"
             :minimum="dateBounds.minimum"
             :maximum="dateBounds.maximum"
             @update:model-value="updateDate('endDate', $event)"
           />
-          <div class="date-presets" aria-label="Date presets">
+          <div class="date-presets" :aria-label="t('explorer.filterPanel.presets')">
             <button
               v-for="preset in ['7d', '30d', '90d', 'full'] as const"
               :key="preset"
               type="button"
               @click="emit('preset', preset)"
             >
-              {{ preset === 'full' ? 'Full scope' : preset.replace('d', ' days') }}
+              {{
+                preset === 'full'
+                  ? t('explorer.filterPanel.full')
+                  : t('explorer.filterPanel.days', { count: preset.replace('d', '') })
+              }}
             </button>
           </div>
         </fieldset>
 
         <fieldset>
-          <legend>Campaign</legend>
+          <legend>{{ t('explorer.filterPanel.campaign') }}</legend>
           <label v-for="campaign in catalog.campaigns" :key="campaign.id" class="check-option">
             <input
               type="checkbox"
@@ -123,7 +132,7 @@ const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${
         </fieldset>
 
         <fieldset>
-          <legend>Channel</legend>
+          <legend>{{ t('explorer.filterPanel.channel') }}</legend>
           <label v-for="channel in catalog.channels" :key="channel.id" class="check-option">
             <input
               type="checkbox"
@@ -136,7 +145,7 @@ const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${
         </fieldset>
 
         <fieldset>
-          <legend>Location</legend>
+          <legend>{{ t('explorer.filterPanel.location') }}</legend>
           <label v-for="location in catalog.locations" :key="location.id" class="check-option">
             <input
               type="checkbox"
@@ -149,7 +158,7 @@ const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${
         </fieldset>
 
         <fieldset>
-          <legend>Device</legend>
+          <legend>{{ t('explorer.filterPanel.device') }}</legend>
           <label v-for="device in catalog.devices" :key="device" class="check-option">
             <input
               type="checkbox"
@@ -162,7 +171,7 @@ const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${
         </fieldset>
 
         <fieldset class="qr-filter-options">
-          <legend>Scenario QR</legend>
+          <legend>{{ t('explorer.filterPanel.scenarioQr') }}</legend>
           <label v-for="qr in catalog.qrCodes" :key="qr.id" class="check-option">
             <input
               type="checkbox"
@@ -176,9 +185,11 @@ const deviceLabel = (device: DeviceType) => `${device.charAt(0).toUpperCase()}${
       </div>
 
       <footer class="filter-panel__actions">
-        <button class="button button--secondary" type="button" @click="emit('reset')">Reset</button>
+        <button class="button button--secondary" type="button" @click="emit('reset')">
+          {{ t('explorer.filterPanel.reset') }}
+        </button>
         <button class="button button--primary" type="button" @click="emit('apply')">
-          Apply filters
+          {{ t('explorer.filterPanel.apply') }}
         </button>
       </footer>
     </aside>

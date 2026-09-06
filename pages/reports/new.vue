@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ReportJobCard from '~/components/reports/ReportJobCard.vue'
 import ReportPreview from '~/components/reports/ReportPreview.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
@@ -9,7 +10,7 @@ import { eventDatasetProvider } from '~/data/provider/eventDatasetProvider'
 import { northstarScenarioV1 } from '~/data/scenarios/northstarV1'
 import { REPORT_TITLE_MAX_LENGTH, type ReportSection } from '~/domain/reports/models'
 import { validateCreateReportRequest } from '~/domain/reports/validation'
-import { defaultReportTitle } from '~/features/reports/presentation'
+import { defaultReportTitle, translateReportIssues } from '~/features/reports/presentation'
 import {
   buildReportAnalyticsQuery,
   parseReportRoute,
@@ -17,7 +18,9 @@ import {
 } from '~/features/reports/routeState'
 import { routeQuerySignature, serializeExplorerState } from '~/features/explorer/queryState'
 
-useHead({ title: 'New report' })
+const { t } = useI18n()
+const translate = (key: string, params?: Record<string, unknown>) => t(key, params ?? {})
+useHead(() => ({ title: t('head.reportNew') }))
 const route = useRoute()
 const router = useRouter()
 const catalog = eventDatasetProvider.getCatalog()
@@ -64,7 +67,7 @@ async function submit() {
   }
   const issues = validateCreateReportRequest(request)
   if (issues.length) {
-    formError.value = issues.join(' ')
+    formError.value = translateReportIssues(issues, translate).join(' ')
     return
   }
   formError.value = ''
@@ -75,55 +78,63 @@ async function submit() {
 <template>
   <div class="page">
     <PageHeader
-      eyebrow="Reports / Builder"
-      title="Configure a backend-owned report."
-      description="The current URL preserves the normalized analytics scope. Title and section changes never rerun Explorer analytics."
+      :eyebrow="t('reports.builder.eyebrow')"
+      :title="t('reports.builder.title')"
+      :description="t('reports.builder.description')"
       ><template #actions
-        ><NuxtLink class="button button--ghost" to="/reports">Report history</NuxtLink></template
+        ><NuxtLink class="button button--ghost" to="/reports">{{
+          t('reports.builder.history')
+        }}</NuxtLink></template
       ></PageHeader
     >
     <div class="builder-grid">
       <form class="panel builder-panel" novalidate @submit.prevent="submit">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Report setup</p>
-            <h2>Request details</h2>
+            <p class="eyebrow">{{ t('reports.builder.setup') }}</p>
+            <h2>{{ t('reports.builder.details') }}</h2>
           </div>
           <span class="step-count">01</span>
         </div>
         <label class="field-label"
-          >Report title<input
+          >{{ t('reports.builder.titleLabel')
+          }}<input
             v-model="title"
             type="text"
             required
             :maxlength="REPORT_TITLE_MAX_LENGTH"
             aria-describedby="report-title-help"
         /></label>
-        <small id="report-title-help">Maximum {{ REPORT_TITLE_MAX_LENGTH }} characters.</small>
+        <small id="report-title-help">{{
+          t('reports.builder.max', { count: REPORT_TITLE_MAX_LENGTH })
+        }}</small>
         <label class="field-label"
-          >Format<select disabled>
+          >{{ t('reports.builder.format')
+          }}<select disabled>
             <option>PDF</option>
           </select></label
         >
         <div class="report-scope-summary">
-          <strong>Analytics scope comes from the URL</strong>
-          <span>Campaign, date and all categorical filters use the Explorer query model.</span>
-          <NuxtLink class="text-action" :to="explorerLocation">Edit scope in Explorer</NuxtLink>
+          <strong>{{ t('reports.builder.scopeUrl') }}</strong>
+          <span>{{ t('reports.builder.scopeDescription') }}</span>
+          <NuxtLink class="text-action" :to="explorerLocation">{{
+            t('reports.builder.editScope')
+          }}</NuxtLink>
         </div>
         <div class="section-heading section-heading--divider">
           <div>
-            <p class="eyebrow">Structure</p>
-            <h2>Included sections</h2>
+            <p class="eyebrow">{{ t('reports.builder.structure') }}</p>
+            <h2>{{ t('reports.builder.included') }}</h2>
           </div>
           <span class="step-count">02</span>
         </div>
         <fieldset class="section-fieldset">
-          <legend class="sr-only">Included report sections</legend>
+          <legend class="sr-only">{{ t('reports.builder.includedLegend') }}</legend>
           <div class="section-picker">
             <label v-for="section in reportSectionOptions" :key="section.id">
               <span
-                ><strong>{{ section.title }}</strong
-                ><small>{{ section.summary }}</small></span
+                ><strong>{{ t(`reports.sections.${section.id}`) }}</strong
+                ><small>{{ t(`reports.sectionSummaries.${section.id}`) }}</small></span
               >
               <input v-model="sections" type="checkbox" :value="section.id" />
             </label>
@@ -133,7 +144,7 @@ async function submit() {
           {{ formError || reports.error.value }}
         </p>
         <button class="button button--primary button--full" type="submit" :disabled="reports.busy.value">
-          {{ reports.busy.value ? 'Submitting…' : 'Generate report' }}
+          {{ reports.busy.value ? t('reports.builder.submitting') : t('reports.builder.generate') }}
         </button>
       </form>
       <aside class="panel builder-summary">
@@ -141,8 +152,8 @@ async function submit() {
       </aside>
     </div>
     <section v-if="currentJob" class="current-report-job" aria-labelledby="current-job-title">
-      <p class="eyebrow">Latest request</p>
-      <h2 id="current-job-title">Generation status</h2>
+      <p class="eyebrow">{{ t('reports.builder.latest') }}</p>
+      <h2 id="current-job-title">{{ t('reports.builder.status') }}</h2>
       <ReportJobCard :job="currentJob" :catalog="catalog" />
     </section>
   </div>

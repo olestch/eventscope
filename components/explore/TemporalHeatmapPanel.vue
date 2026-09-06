@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AnalyticsChart from '~/components/explore/AnalyticsChart.vue'
 import {
   buildTemporalHeatmapChartOption,
-  measureLabels,
-  temporalInsightRuleLabel,
+  temporalInsightRuleValues,
+  translatedMeasureLabel,
   type TemporalHeatmapViewModel
 } from '~/features/explorer/presentation'
 import { explorerTemporalMeasures, type ExplorerTemporalMeasure } from '~/features/explorer/queryState'
@@ -13,6 +14,10 @@ const props = defineProps<{
   model: TemporalHeatmapViewModel
   measure: ExplorerTemporalMeasure
 }>()
+const { locale, t } = useI18n()
+const presentationLocale = computed(() => (locale.value === 'ru' ? 'ru' : 'en'))
+const translate = (key: string, params?: Record<string, unknown>) => t(key, params ?? {})
+const ruleValues = computed(() => temporalInsightRuleValues(presentationLocale.value))
 const emit = defineEmits<{ measure: [measure: ExplorerTemporalMeasure] }>()
 const option = computed(() => buildTemporalHeatmapChartOption(props.model, false))
 const updateMeasure = (event: Event) =>
@@ -23,42 +28,51 @@ const updateMeasure = (event: Event) =>
   <figure class="temporal-panel explorer-visualization">
     <figcaption class="visualization-heading visualization-heading--controls">
       <div>
-        <p class="eyebrow">Temporal heatmap</p>
-        <h2>Weekday × hour behavior</h2>
+        <p class="eyebrow">{{ t('explorer.temporalPanel.eyebrow') }}</p>
+        <h2>{{ t('explorer.temporalPanel.title') }}</h2>
         <p id="temporal-semantics">
-          Monday-first UTC matrix · each hour is a half-open interval · read-only exploration
+          {{ t('explorer.temporalPanel.semantics') }}
         </p>
       </div>
       <div class="temporal-controls">
         <label>
-          <span>Measure</span>
+          <span>{{ t('explorer.temporalPanel.measure') }}</span>
           <select :value="measure" aria-describedby="temporal-semantics" @change="updateMeasure">
             <option v-for="value in explorerTemporalMeasures" :key="value" :value="value">
-              {{ measureLabels[value] }}
+              {{ translatedMeasureLabel(value, translate) }}
             </option>
           </select>
         </label>
       </div>
     </figcaption>
 
-    <p class="temporal-scale" aria-label="Heatmap scale">
-      Continuous intensity scale: <strong>{{ model.scale.minLabel }}</strong> minimum to
-      <strong>{{ model.scale.maxLabel }}</strong> maximum. Exact values are available below.
+    <p class="temporal-scale" :aria-label="t('explorer.temporalPanel.scaleLabel')">
+      {{
+        t('explorer.temporalPanel.scale', {
+          min: model.scale.minLabel,
+          max: model.scale.maxLabel
+        })
+      }}
     </p>
     <AnalyticsChart
       :option="option"
       :empty="model.empty"
-      :empty-message="`No ${model.measureLabel.toLowerCase()} occurred in this temporal scope.`"
-      :label="`${model.measureLabel} by UTC weekday and hour. Exact values follow in the data table.`"
+      :empty-message="t('explorer.temporalPanel.empty', { measure: model.measureLabel.toLowerCase() })"
+      :label="t('explorer.temporalPanel.chartLabel', { measure: model.measureLabel })"
     />
 
     <section class="temporal-insights" aria-labelledby="temporal-insights-title">
       <div class="temporal-insights__heading">
         <div>
-          <p class="eyebrow">Explainable insights</p>
-          <h3 id="temporal-insights-title">Patterns supported by this aggregate</h3>
+          <p class="eyebrow">{{ t('explorer.temporalPanel.insights') }}</p>
+          <h3 id="temporal-insights-title">{{ t('explorer.temporalPanel.patterns') }}</h3>
         </div>
-        <span>Deterministic rules · {{ temporalInsightRuleLabel }}</span>
+        <span>{{
+          t('explorer.temporalPanel.rules', {
+            difference: ruleValues.difference,
+            count: ruleValues.count
+          })
+        }}</span>
       </div>
       <div v-if="model.insights.length" class="temporal-insight-list">
         <article v-for="insight in model.insights" :key="insight.id">
@@ -67,21 +81,23 @@ const updateMeasure = (event: Event) =>
         </article>
       </div>
       <p v-else class="temporal-insights__empty">
-        No temporal statement cleared the documented threshold for this measure and scope.
+        {{ t('explorer.temporalPanel.noInsight') }}
       </p>
     </section>
 
     <details class="chart-data temporal-data">
-      <summary>View all 168 temporal values</summary>
+      <summary>{{ t('explorer.temporalPanel.allValues') }}</summary>
       <div class="table-scroll">
         <table>
           <caption class="sr-only">
-            Exact values for every Monday-first UTC weekday and hour combination
+            {{
+              t('explorer.temporalPanel.caption')
+            }}
           </caption>
           <thead>
             <tr>
-              <th scope="col">Day</th>
-              <th scope="col">Hour interval</th>
+              <th scope="col">{{ t('explorer.temporalPanel.day') }}</th>
+              <th scope="col">{{ t('explorer.temporalPanel.hour') }}</th>
               <th scope="col">{{ model.measureLabel }}</th>
             </tr>
           </thead>

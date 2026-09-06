@@ -1,4 +1,5 @@
 import type { EChartsCoreOption } from 'echarts/core'
+import { temporalWeekdays } from '~/domain/analytics/contracts'
 import type {
   BreakdownResult,
   ComparisonResult,
@@ -25,17 +26,15 @@ import {
   type ExplorerView
 } from '~/features/explorer/queryState'
 
-const integerFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
-const compactFormatter = new Intl.NumberFormat('en-US', {
-  notation: 'compact',
-  maximumFractionDigits: 1
-})
-const dateFormatter = new Intl.DateTimeFormat('en', {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-  timeZone: 'UTC'
-})
+export type PresentationLocale = 'en' | 'ru'
+export type PresentationTranslate = (key: string, params?: Record<string, unknown>) => string
+const intlLocale = (locale: PresentationLocale) => (locale === 'ru' ? 'ru-RU' : 'en-US')
+const translated = (
+  t: PresentationTranslate | undefined,
+  key: string,
+  fallback: string,
+  params?: Record<string, unknown>
+) => (t ? t(key, params) : fallback)
 
 export const measureLabels: Record<ExplorerBreakdownMeasure, string> = {
   events: 'Events',
@@ -73,20 +72,53 @@ export const formatHour = (hour: number): string => `${String(hour).padStart(2, 
 export const formatHourRange = (hour: number): string =>
   `${formatHour(hour)}–${formatHour((hour + 1) % 24)} UTC`
 
-export const formatCount = (value = 0): string => integerFormatter.format(value)
-export const formatCompactCount = (value = 0): string => compactFormatter.format(value)
-export const formatPercentage = (value = 0): string => `${(value * 100).toFixed(1)}%`
-export const formatDate = (value: string): string => dateFormatter.format(new Date(value))
-export const formatDateOnly = (value: string): string =>
-  dateFormatter.format(new Date(`${value}T00:00:00.000Z`))
-export const formatInclusiveRange = (start: string, end: string): string =>
-  `${formatDateOnly(start)} – ${formatDateOnly(end)}`
-export const formatBucketRange = (start: string, end: string): string =>
-  `${formatDate(start)} – ${formatDate(end)} [start, end) UTC`
+export const formatCount = (value = 0, locale: PresentationLocale = 'en'): string =>
+  new Intl.NumberFormat(intlLocale(locale), { maximumFractionDigits: 0 }).format(value)
+export const formatCompactCount = (value = 0, locale: PresentationLocale = 'en'): string =>
+  new Intl.NumberFormat(intlLocale(locale), {
+    notation: 'compact',
+    maximumFractionDigits: 1
+  }).format(value)
+export const formatPercentage = (value = 0, locale: PresentationLocale = 'en'): string =>
+  new Intl.NumberFormat(intlLocale(locale), {
+    style: 'percent',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  }).format(value)
+export const formatDate = (value: string, locale: PresentationLocale = 'en'): string =>
+  new Intl.DateTimeFormat(intlLocale(locale), {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC'
+  }).format(new Date(value))
+export const formatDateOnly = (value: string, locale: PresentationLocale = 'en'): string =>
+  formatDate(`${value}T00:00:00.000Z`, locale)
+export const formatInclusiveRange = (
+  start: string,
+  end: string,
+  locale: PresentationLocale = 'en'
+): string => `${formatDateOnly(start, locale)} – ${formatDateOnly(end, locale)}`
+export const formatBucketRange = (
+  start: string,
+  end: string,
+  locale: PresentationLocale = 'en'
+): string => `${formatDate(start, locale)} – ${formatDate(end, locale)} [start, end) UTC`
 
-export function formatMeasure(value: number, measure: Measure): string {
-  return measure === 'conversion_rate' ? formatPercentage(value) : formatCount(value)
+export function formatMeasure(
+  value: number,
+  measure: Measure,
+  locale: PresentationLocale = 'en'
+): string {
+  return measure === 'conversion_rate' ? formatPercentage(value, locale) : formatCount(value, locale)
 }
+
+export const translatedMeasureLabel = (measure: ExplorerBreakdownMeasure, t?: PresentationTranslate) =>
+  translated(t, `explorer.measures.${measure}`, measureLabels[measure])
+export const translatedBreakdownLabel = (breakdown: ExplorerBreakdown, t?: PresentationTranslate) =>
+  translated(t, `explorer.dimensions.${breakdown}`, breakdownLabels[breakdown])
+export const translatedWorkspaceLabel = (view: ExplorerView, t?: PresentationTranslate) =>
+  translated(t, `explorer.${view}`, workspaceLabels[view])
 
 export interface TimelineViewPoint {
   label: string
@@ -102,12 +134,15 @@ export interface TimelineViewModel {
   points: TimelineViewPoint[]
 }
 
-export function buildTimelineViewModel(result: TimeSeriesResult): TimelineViewModel {
+export function buildTimelineViewModel(
+  result: TimeSeriesResult,
+  locale: PresentationLocale = 'en'
+): TimelineViewModel {
   return {
     bucket: result.bucket,
     points: result.points.map((point) => ({
-      label: formatDate(point.range.start),
-      rangeLabel: formatBucketRange(point.range.start, point.range.end),
+      label: formatDate(point.range.start, locale),
+      rangeLabel: formatBucketRange(point.range.start, point.range.end, locale),
       range: { ...point.range },
       drillable: canDrillIntoTimelinePeriod(point.range),
       events: point.values.events ?? 0,
@@ -116,12 +151,18 @@ export function buildTimelineViewModel(result: TimeSeriesResult): TimelineViewMo
   }
 }
 
-const labelFor = (dimension: ExplorerBreakdown, key: string, catalog: ReferenceCatalog): string => {
+const labelFor = (
+  dimension: ExplorerBreakdown,
+  key: string,
+  catalog: ReferenceCatalog,
+  t?: PresentationTranslate
+): string => {
   if (dimension === 'campaign') return catalog.campaigns.find(({ id }) => id === key)?.name ?? key
   if (dimension === 'channel') return catalog.channels.find(({ id }) => id === key)?.name ?? key
   if (dimension === 'location') return catalog.locations.find(({ id }) => id === key)?.name ?? key
   if (dimension === 'qr_code') return catalog.qrCodes.find(({ id }) => id === key)?.name ?? key
-  if (dimension === 'device') return `${key.charAt(0).toUpperCase()}${key.slice(1)}`
+  if (dimension === 'device')
+    return translated(t, `explorer.devices.${key}`, `${key.charAt(0).toUpperCase()}${key.slice(1)}`)
   return key
 }
 
@@ -146,28 +187,30 @@ export interface BreakdownViewModel {
 export function buildBreakdownViewModel(
   result: BreakdownResult,
   catalog: ReferenceCatalog,
-  measure: ExplorerBreakdownMeasure
+  measure: ExplorerBreakdownMeasure,
+  locale: PresentationLocale = 'en',
+  t?: PresentationTranslate
 ): BreakdownViewModel {
   const secondaryMeasure: Measure = measure === 'sessions' ? 'conversion_rate' : 'sessions'
   const rows = result.rows
     .map((row) => ({
       key: row.key,
-      label: labelFor(result.dimension as ExplorerBreakdown, row.key, catalog),
+      label: labelFor(result.dimension as ExplorerBreakdown, row.key, catalog, t),
       value: row.values[measure] ?? 0,
-      formattedValue: formatMeasure(row.values[measure] ?? 0, measure),
+      formattedValue: formatMeasure(row.values[measure] ?? 0, measure, locale),
       secondaryValue: row.values[secondaryMeasure],
       formattedSecondary:
         row.values[secondaryMeasure] === undefined
           ? undefined
-          : formatMeasure(row.values[secondaryMeasure]!, secondaryMeasure)
+          : formatMeasure(row.values[secondaryMeasure]!, secondaryMeasure, locale)
     }))
     .sort((left, right) => right.value - left.value || left.label.localeCompare(right.label))
   return {
     dimension: result.dimension as ExplorerBreakdown,
     measure,
-    measureLabel: measureLabels[measure],
+    measureLabel: translatedMeasureLabel(measure, t),
     secondaryMeasure,
-    secondaryMeasureLabel: secondaryMeasure === 'conversion_rate' ? 'Conversion rate' : 'Sessions',
+    secondaryMeasureLabel: translatedMeasureLabel(secondaryMeasure as ExplorerBreakdownMeasure, t),
     rows
   }
 }
@@ -181,7 +224,8 @@ export interface ActiveFilterChip {
 
 export function buildActiveFilterChips(
   state: ExplorerQueryState,
-  catalog: ReferenceCatalog
+  catalog: ReferenceCatalog,
+  t?: PresentationTranslate
 ): ActiveFilterChip[] {
   const groups: Array<{
     group: ActiveFilterChip['group']
@@ -211,7 +255,8 @@ export function buildActiveFilterChips(
     {
       group: 'devices',
       values: state.devices,
-      label: (value) => `${value.charAt(0).toUpperCase()}${value.slice(1)}`
+      label: (value) =>
+        translated(t, `explorer.devices.${value}`, `${value.charAt(0).toUpperCase()}${value.slice(1)}`)
     }
   ]
   return groups.flatMap(({ group, values, label }) =>
@@ -227,7 +272,9 @@ const tooltipParameters = (value: unknown): TooltipParameter[] =>
 
 export function buildTimelineChartOption(
   model: TimelineViewModel,
-  reducedMotion: boolean
+  reducedMotion: boolean,
+  locale: PresentationLocale = 'en',
+  t?: PresentationTranslate
 ): EChartsCoreOption {
   return {
     animation: !reducedMotion,
@@ -241,7 +288,7 @@ export function buildTimelineChartOption(
         const index = parameters[0]?.dataIndex ?? 0
         const point = model.points[index]
         return point
-          ? `<strong>${point.rangeLabel}</strong><br/>Events: ${formatCount(point.events)}<br/>QR scans: ${formatCount(point.qrScans)}${point.drillable ? '<br/><em>Click to explore this period</em>' : ''}`
+          ? `<strong>${point.rangeLabel}</strong><br/>${translatedMeasureLabel('events', t)}: ${formatCount(point.events, locale)}<br/>${translatedMeasureLabel('qr_scans', t)}: ${formatCount(point.qrScans, locale)}${point.drillable ? `<br/><em>${translated(t, 'explorer.timeline.tooltipExplore', 'Click to explore this period')}</em>` : ''}`
           : ''
       }
     },
@@ -254,12 +301,15 @@ export function buildTimelineChartOption(
     },
     yAxis: {
       type: 'value',
-      axisLabel: { color: '#8294a3', formatter: (value: number) => formatCompactCount(value) },
+      axisLabel: {
+        color: '#8294a3',
+        formatter: (value: number) => formatCompactCount(value, locale)
+      },
       splitLine: { lineStyle: { color: 'rgba(170,185,197,.11)', type: 'dashed' } }
     },
     series: [
       {
-        name: 'Events',
+        name: translatedMeasureLabel('events', t),
         type: 'line',
         symbol: 'circle',
         showSymbol: model.points.length < 32,
@@ -269,7 +319,7 @@ export function buildTimelineChartOption(
         data: model.points.map(({ events }) => events)
       },
       {
-        name: 'QR scans',
+        name: translatedMeasureLabel('qr_scans', t),
         type: 'line',
         symbol: 'diamond',
         showSymbol: model.points.length < 32,
@@ -283,7 +333,9 @@ export function buildTimelineChartOption(
 
 export function buildBreakdownChartOption(
   model: BreakdownViewModel,
-  reducedMotion: boolean
+  reducedMotion: boolean,
+  locale: PresentationLocale = 'en',
+  t?: PresentationTranslate
 ): EChartsCoreOption {
   return {
     animation: !reducedMotion,
@@ -295,7 +347,7 @@ export function buildBreakdownChartOption(
         const index = tooltipParameters(value)[0]?.dataIndex ?? 0
         const row = model.rows[index]
         return row
-          ? `<strong>${row.label}</strong><br/>${model.measureLabel}: ${row.formattedValue}<br/><em>Click to add this filter</em>`
+          ? `<strong>${row.label}</strong><br/>${model.measureLabel}: ${row.formattedValue}<br/><em>${translated(t, 'explorer.breakdownPanel.tooltipFilter', 'Click to add this filter')}</em>`
           : ''
       }
     },
@@ -304,7 +356,9 @@ export function buildBreakdownChartOption(
       axisLabel: {
         color: '#8294a3',
         formatter: (value: number) =>
-          model.measure === 'conversion_rate' ? formatPercentage(value) : formatCompactCount(value)
+          model.measure === 'conversion_rate'
+            ? formatPercentage(value, locale)
+            : formatCompactCount(value, locale)
       },
       splitLine: { lineStyle: { color: 'rgba(170,185,197,.1)', type: 'dashed' } }
     },
@@ -350,10 +404,14 @@ export interface ComparisonViewModel {
   metrics: Partial<Record<ExplorerBreakdownMeasure, ComparisonMetricView>>
 }
 
-const formatSignedDelta = (value: number): string =>
-  `${value > 0 ? '+' : value < 0 ? '−' : ''}${Math.abs(value).toFixed(1)}%`
+const formatSignedDelta = (value: number, locale: PresentationLocale): string =>
+  `${value > 0 ? '+' : value < 0 ? '−' : ''}${formatPercentage(Math.abs(value) / 100, locale)}`
 
-export function buildComparisonViewModel(result: ComparisonResult): ComparisonViewModel {
+export function buildComparisonViewModel(
+  result: ComparisonResult,
+  locale: PresentationLocale = 'en',
+  t?: PresentationTranslate
+): ComparisonViewModel {
   const metrics: ComparisonViewModel['metrics'] = {}
   const noPreviousData = result.comparison.metadata.matchedEventCount === 0
   for (const measure of explorerBreakdownMeasures) {
@@ -362,21 +420,38 @@ export function buildComparisonViewModel(result: ComparisonResult): ComparisonVi
     const percentage = result.deltas[measure]?.percentage ?? null
     let metric: ComparisonMetricView
     if (noPreviousData) {
-      metric = { measure, state: 'no_previous', text: 'No previous data', direction: 'neutral' }
+      metric = {
+        measure,
+        state: 'no_previous',
+        text: translated(t, 'explorer.summary.noPrevious', 'No previous data'),
+        direction: 'neutral'
+      }
     } else if (previous === 0 && current > 0) {
-      metric = { measure, state: 'new', text: 'New vs previous period', direction: 'up' }
+      metric = {
+        measure,
+        state: 'new',
+        text: translated(t, 'explorer.summary.newPrevious', 'New vs previous period'),
+        direction: 'up'
+      }
     } else if (percentage === null || percentage === 0) {
       metric = {
         measure,
         state: 'unchanged',
-        text: 'No change vs previous period',
+        text: translated(t, 'explorer.summary.noChange', 'No change vs previous period'),
         direction: 'neutral'
       }
     } else {
       metric = {
         measure,
         state: 'change',
-        text: `${formatSignedDelta(percentage)} vs previous period`,
+        text: translated(
+          t,
+          'explorer.summary.changed',
+          `${formatSignedDelta(percentage, locale)} vs previous period`,
+          {
+            change: formatSignedDelta(percentage, locale)
+          }
+        ),
         direction: percentage > 0 ? 'up' : 'down'
       }
     }
@@ -385,7 +460,8 @@ export function buildComparisonViewModel(result: ComparisonResult): ComparisonVi
   return {
     rangeLabel: formatBucketRange(
       result.comparisonDefinition.range.start,
-      result.comparisonDefinition.range.end
+      result.comparisonDefinition.range.end,
+      locale
     ),
     metrics
   }
@@ -409,30 +485,38 @@ export interface FunnelViewModel {
   steps: FunnelStepView[]
 }
 
-export function buildFunnelViewModel(result: FunnelResult): FunnelViewModel {
+export function buildFunnelViewModel(
+  result: FunnelResult,
+  locale: PresentationLocale = 'en',
+  t?: PresentationTranslate
+): FunnelViewModel {
   return {
-    name: primaryConversionFunnel.name,
-    description: primaryConversionFunnel.description,
+    name: translated(t, 'explorer.funnelPanel.name', primaryConversionFunnel.name),
+    description: translated(t, 'explorer.funnelPanel.description', primaryConversionFunnel.description),
     empty: (result.steps[0]?.sessions ?? 0) === 0,
     steps: result.steps.map((step, index) => {
       const previous = result.steps[index - 1]?.sessions
       const progression = index === 0 ? undefined : previous ? (step.sessions / previous) * 100 : null
       return {
         eventType: step.eventType,
-        label: primaryConversionFunnel.stepLabels[step.eventType],
+        label: translated(
+          t,
+          `explorer.funnelPanel.${step.eventType}`,
+          primaryConversionFunnel.stepLabels[step.eventType]
+        ),
         sessions: step.sessions,
-        formattedSessions: formatCount(step.sessions),
-        percentageFromFirst: `${step.percentageFromFirst.toFixed(1)}%`,
+        formattedSessions: formatCount(step.sessions, locale),
+        percentageFromFirst: formatPercentage(step.percentageFromFirst / 100, locale),
         progressionFromPrevious:
           index === 0
-            ? 'Entrants'
+            ? translated(t, 'explorer.funnelPanel.entrants', 'Entrants')
             : progression == null
-              ? 'No prior entrants'
-              : `${progression.toFixed(1)}%`,
+              ? translated(t, 'explorer.funnelPanel.noPrior', 'No prior entrants')
+              : formatPercentage(progression / 100, locale),
         dropOffFromPrevious:
           step.dropOffFromPrevious === null
             ? '—'
-            : `${Math.max(0, step.dropOffFromPrevious).toFixed(1)}%`,
+            : formatPercentage(Math.max(0, step.dropOffFromPrevious) / 100, locale),
         width: Math.max(step.sessions ? step.percentageFromFirst : 0, 2)
       }
     })
@@ -476,46 +560,94 @@ const countDirection = (value: number): string => (value >= 0 ? 'more' : 'fewer'
 
 export function buildTemporalHeatmapViewModel(
   result: TemporalHeatmapResult,
-  measure: ExplorerTemporalMeasure
+  measure: ExplorerTemporalMeasure,
+  locale: PresentationLocale = 'en',
+  t?: PresentationTranslate
 ): TemporalHeatmapViewModel {
+  const weekdayFormatter = new Intl.DateTimeFormat(intlLocale(locale), {
+    weekday: 'long',
+    timeZone: 'UTC'
+  })
+  const weekdayLabels = Object.fromEntries(
+    temporalWeekdays.map((weekday) => [
+      weekday,
+      weekdayFormatter.format(new Date(Date.UTC(2026, 0, 5 + weekday)))
+    ])
+  ) as Record<TemporalWeekday, string>
   const cells = result.cells.map((cell) => {
     const value = cell.values[measure] ?? 0
     return {
       weekday: cell.weekday,
-      weekdayLabel: temporalWeekdayLabels[cell.weekday],
+      weekdayLabel: weekdayLabels[cell.weekday],
       hour: cell.hour,
       hourLabel: formatHour(cell.hour),
       hourRangeLabel: formatHourRange(cell.hour),
       value,
-      formattedValue: formatMeasure(value, measure),
+      formattedValue: formatMeasure(value, measure, locale),
       coordinates: [cell.hour, cell.weekday, value] as [number, number, number]
     }
   })
   const values = cells.map(({ value }) => value)
   const min = values.length ? Math.min(...values) : 0
   const max = values.length ? Math.max(...values) : 0
-  const label = measureLabels[measure]
+  const label = translatedMeasureLabel(measure, t)
   const insights = deriveTemporalInsights(result, measure).map<TemporalInsightView>((insight) => {
     if (insight.kind === 'peak_window') {
       return {
         id: insight.id,
-        title: 'Peak temporal window',
-        detail: `${temporalWeekdayLabels[insight.evidence.weekday]} · ${formatHourRange(insight.evidence.hour)} has the highest ${label.toLowerCase()} value at ${formatMeasure(insight.evidence.value, measure)}.`
+        title: translated(t, 'explorer.temporalPanel.peakTitle', 'Peak temporal window'),
+        detail: translated(
+          t,
+          'explorer.temporalPanel.peakDetail',
+          `${weekdayLabels[insight.evidence.weekday]} · ${formatHourRange(insight.evidence.hour)} has the highest ${label.toLowerCase()} value at ${formatMeasure(insight.evidence.value, measure, locale)}.`,
+          {
+            weekday: weekdayLabels[insight.evidence.weekday],
+            hour: formatHourRange(insight.evidence.hour),
+            measure: label.toLowerCase(),
+            value: formatMeasure(insight.evidence.value, measure, locale)
+          }
+        )
       }
     }
     if (insight.kind === 'weekday_weekend') {
       const difference = insight.evidence.relativeDifference
       return {
         id: insight.id,
-        title: 'Weekday / weekend balance',
-        detail: `Weekend-day heatmap intensity averages ${formatPercentage(Math.abs(difference))} ${intensityDirection(difference)} than weekday intensity for ${label.toLowerCase()}.`
+        title: translated(t, 'explorer.temporalPanel.weekendTitle', 'Weekday / weekend balance'),
+        detail: translated(
+          t,
+          'explorer.temporalPanel.weekendDetail',
+          `Weekend-day heatmap intensity averages ${formatPercentage(Math.abs(difference), locale)} ${intensityDirection(difference)} than weekday intensity for ${label.toLowerCase()}.`,
+          {
+            difference: formatPercentage(Math.abs(difference), locale),
+            direction: translated(
+              t,
+              `explorer.temporalPanel.${intensityDirection(difference)}`,
+              intensityDirection(difference)
+            ),
+            measure: label.toLowerCase()
+          }
+        )
       }
     }
     const difference = insight.evidence.relativeDifference
     return {
       id: insight.id,
-      title: 'Morning / evening balance',
-      detail: `Evening cells (18:00–24:00 UTC) contain ${formatPercentage(Math.abs(difference))} ${countDirection(difference)} ${label.toLowerCase()} than morning cells (06:00–12:00 UTC).`
+      title: translated(t, 'explorer.temporalPanel.daypartTitle', 'Morning / evening balance'),
+      detail: translated(
+        t,
+        'explorer.temporalPanel.daypartDetail',
+        `Evening cells (18:00–24:00 UTC) contain ${formatPercentage(Math.abs(difference), locale)} ${countDirection(difference)} ${label.toLowerCase()} than morning cells (06:00–12:00 UTC).`,
+        {
+          difference: formatPercentage(Math.abs(difference), locale),
+          direction: translated(
+            t,
+            `explorer.temporalPanel.${countDirection(difference)}`,
+            countDirection(difference)
+          ),
+          measure: label.toLowerCase()
+        }
+      )
     }
   })
   return {
@@ -527,8 +659,8 @@ export function buildTemporalHeatmapViewModel(
       min,
       max,
       visualMax: max === min ? max + (measure === 'conversion_rate' ? 0.01 : 1) : max,
-      minLabel: formatMeasure(min, measure),
-      maxLabel: formatMeasure(max, measure)
+      minLabel: formatMeasure(min, measure, locale),
+      maxLabel: formatMeasure(max, measure, locale)
     },
     insights
   }
@@ -568,7 +700,9 @@ export function buildTemporalHeatmapChartOption(
     yAxis: {
       type: 'category',
       inverse: true,
-      data: Object.values(temporalWeekdayLabels),
+      data: temporalWeekdays.map(
+        (weekday) => model.cells.find((cell) => cell.weekday === weekday)?.weekdayLabel ?? ''
+      ),
       axisLine: { show: false },
       axisTick: { show: false },
       axisLabel: { color: '#dce6ec' }
@@ -601,4 +735,7 @@ export function buildTemporalHeatmapChartOption(
   }
 }
 
-export const temporalInsightRuleLabel = `≥${formatPercentage(TEMPORAL_RELATIVE_INSIGHT_THRESHOLD)} difference · ≥${formatCount(TEMPORAL_MIN_COMPARISON_TOTAL)} counted units`
+export const temporalInsightRuleValues = (locale: PresentationLocale = 'en') => ({
+  difference: formatPercentage(TEMPORAL_RELATIVE_INSIGHT_THRESHOLD, locale),
+  count: formatCount(TEMPORAL_MIN_COMPARISON_TOTAL, locale)
+})

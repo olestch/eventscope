@@ -4,16 +4,16 @@ EventScope uses a fictional, seeded scenario rather than customer data. The cano
 
 ## Reproducibility
 
-The scenario version, seed, profile and ordered event records form the dataset fingerprint. Phase 9.5 intentionally advances the scenario to `northstar-behavior-v2` while retaining the default seed `eventscope-reference-2026` and the exact 320, 10K, 100K and 1M profile sizes.
+The scenario version, seed, profile and ordered event records form the dataset fingerprint. The current `northstar-behavior-v2` scenario retains the default seed `eventscope-reference-2026` and the exact 320, 10K, 100K and 1M profile sizes.
 
-| Profile     |    Events | Phase 9 fingerprint | Phase 9.5 fingerprint |
-| ----------- | --------: | ------------------- | --------------------- |
-| Test        |       320 | not contract-pinned | `es2-f233d447`        |
-| Development |    10,000 | `es2-b50844cc`      | `es2-0b946418`        |
-| Large       |   100,000 | `es2-315c4383`      | `es2-e91f0cc3`        |
-| Showcase    | 1,000,000 | `es2-0408c688`      | `es2-903683f5`        |
+| Profile     |    Events | Fingerprint    |
+| ----------- | --------: | -------------- |
+| Test        |       320 | `es2-f233d447` |
+| Development |    10,000 | `es2-0b946418` |
+| Standard    |   100,000 | `es2-e91f0cc3` |
+| Showcase    | 1,000,000 | `es2-903683f5` |
 
-The fingerprint change is expected: campaign assignment, channel mix, device mix and conversion likelihood are now campaign-aware. Repeating the same scenario, seed and profile still returns the same records and fingerprint.
+Repeating the same scenario, seed and profile returns the same ordered records and fingerprint. Any intentional change to campaign assignment, channel mix, device mix or conversion likelihood must update this versioned evidence.
 
 ## Campaign stories
 

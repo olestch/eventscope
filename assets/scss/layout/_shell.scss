@@ -74,12 +74,25 @@
   letter-spacing: 0.04em;
 }
 .sidebar__footer {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
   gap: 9px;
   margin-top: auto;
   padding: 12px;
   color: var(--slate-500);
+  font-size: 0.75rem;
+}
+.locale-switcher {
+  grid-column: 1 / -1;
+}
+.locale-switcher select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: var(--ink-850);
+  color: var(--paper);
   font-size: 0.75rem;
 }
 .status-dot {

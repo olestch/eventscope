@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import ReportJobCard from '~/components/reports/ReportJobCard.vue'
 import PageHeader from '~/components/ui/PageHeader.vue'
 import StatePanel from '~/components/ui/StatePanel.vue'
 import { useReports } from '~/composables/useReports'
 import { eventDatasetProvider } from '~/data/provider/eventDatasetProvider'
 
-useHead({ title: 'Reports' })
+const { t } = useI18n()
+useHead(() => ({ title: t('head.reports') }))
 const reports = useReports()
 const catalog = eventDatasetProvider.getCatalog()
 onMounted(reports.load)
@@ -14,33 +16,32 @@ onMounted(reports.load)
 <template>
   <div class="page">
     <PageHeader
-      eyebrow="Reports"
-      title="Turn a question into a report job."
-      description="Configure backend-owned PDF work around the same typed analytics scope used by Explorer. Demo jobs live only in this browser session."
+      :eyebrow="t('reports.page.eyebrow')"
+      :title="t('reports.page.title')"
+      :description="t('reports.page.description')"
       ><template #actions
         ><NuxtLink class="button button--primary" to="/reports/new"
-          >New report <span aria-hidden="true">+</span></NuxtLink
+          >{{ t('reports.page.new') }} <span aria-hidden="true">+</span></NuxtLink
         ></template
       ></PageHeader
     >
     <section class="reports-intro panel" aria-labelledby="create-report-title">
       <div>
-        <p class="eyebrow">Create report</p>
-        <h2 id="create-report-title">Reuse an Explorer scope</h2>
-        <p>
-          Start here with the Northstar default, or use Create report in Explorer to carry its current
-          campaign, QR, device and date filters.
-        </p>
+        <p class="eyebrow">{{ t('reports.page.create') }}</p>
+        <h2 id="create-report-title">{{ t('reports.page.reuse') }}</h2>
+        <p>{{ t('reports.page.reuseDescription') }}</p>
       </div>
-      <NuxtLink class="button button--secondary" to="/reports/new">Configure report</NuxtLink>
+      <NuxtLink class="button button--secondary" to="/reports/new">{{
+        t('reports.page.configure')
+      }}</NuxtLink>
     </section>
     <section class="report-history" aria-labelledby="report-history-title">
       <header class="report-history__heading">
         <div>
-          <p class="eyebrow">This session</p>
-          <h2 id="report-history-title">Recent report jobs</h2>
+          <p class="eyebrow">{{ t('reports.page.session') }}</p>
+          <h2 id="report-history-title">{{ t('reports.page.recent') }}</h2>
         </div>
-        <p>History is intentionally not persisted or synced.</p>
+        <p>{{ t('reports.page.historyNote') }}</p>
       </header>
       <p v-if="reports.error.value" class="form-error" role="alert">{{ reports.error.value }}</p>
       <div v-if="reports.jobs.value.length" class="report-library">
@@ -56,8 +57,8 @@ onMounted(reports.load)
       <StatePanel
         v-else
         state="empty"
-        title="No report jobs in this session"
-        description="Configure a report to demonstrate the asynchronous gateway workflow."
+        :title="t('reports.page.empty')"
+        :description="t('reports.page.emptyDescription')"
       />
     </section>
   </div>

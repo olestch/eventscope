@@ -20,6 +20,7 @@
     "benchmark:analytics": "vitest run --config vitest.baseline.config.ts --configLoader runner --disableConsoleIntercept"
   },
   "dependencies": {
+    "@nuxtjs/i18n": "^10.6.0",
     "echarts": "6.1.0",
     "nuxt": "3.21.11",
     "qrcode-generator": "2.0.4",

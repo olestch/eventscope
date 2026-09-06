@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   ssr: false,
   compatibilityDate: '2026-09-03',
   devtools: { enabled: false },
-  modules: ['@nuxt/eslint'],
+  modules: ['@nuxt/eslint', '@nuxtjs/i18n'],
   css: ['~/assets/scss/main.scss'],
   app: {
     head: {
@@ -12,7 +12,8 @@ export default defineNuxtConfig({
       meta: [
         {
           name: 'description',
-          content: 'A fictional event intelligence studio product shell.'
+          content:
+            'Explore deterministic event analytics, design local QR assets and model asynchronous reporting workflows.'
         },
         { name: 'theme-color', content: '#08131f' }
       ],
@@ -21,6 +22,17 @@ export default defineNuxtConfig({
   },
   typescript: {
     typeCheck: true
+  },
+  i18n: {
+    strategy: 'no_prefix',
+    defaultLocale: 'en',
+    detectBrowserLanguage: false,
+    langDir: 'locales',
+    locales: [
+      { code: 'en', language: 'en', name: 'English', file: 'en.ts' },
+      { code: 'ru', language: 'ru', name: 'Русский', file: 'ru.ts' }
+    ],
+    vueI18n: './i18n.config.ts'
   },
   vite: {
     // ECharts is loaded lazily by the Explorer. Serving its modular entrypoints

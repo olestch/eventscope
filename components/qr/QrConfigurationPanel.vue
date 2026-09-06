@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { ReferenceCatalog } from '~/domain/events/models'
 import { qrDesignConstraints } from '~/domain/qr/constraints'
 import {
@@ -9,11 +10,6 @@ import {
   type QrStudioDraft,
   type QrValidationResult
 } from '~/domain/qr/models'
-import {
-  qrFinderStyleLabels,
-  qrGradientDirectionLabels,
-  qrModuleStyleLabels
-} from '~/features/qr/presentation'
 import { updateDraftCampaign } from '~/features/qr/studio'
 
 const props = defineProps<{
@@ -22,6 +18,7 @@ const props = defineProps<{
   validation: QrValidationResult
 }>()
 const emit = defineEmits<{ change: [draft: QrStudioDraft]; normalizeDestination: [] }>()
+const { t } = useI18n()
 
 const campaign = computed(() => props.catalog.campaigns.find(({ id }) => id === props.draft.campaignId))
 const channels = computed(() =>
@@ -54,14 +51,14 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
   <section class="panel qr-config-panel" aria-labelledby="qr-config-title">
     <div class="section-heading">
       <div>
-        <p class="eyebrow">Definition</p>
-        <h2 id="qr-config-title">Campaign context</h2>
+        <p class="eyebrow">{{ t('qr.studio.definition') }}</p>
+        <h2 id="qr-config-title">{{ t('qr.studio.context') }}</h2>
       </div>
       <span class="step-count">01</span>
     </div>
 
     <label class="field-label"
-      >Asset name
+      >{{ t('qr.studio.assetName') }}
       <input
         :value="draft.name"
         type="text"
@@ -71,7 +68,7 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
       />
     </label>
     <label class="field-label"
-      >Destination URL
+      >{{ t('qr.studio.destination') }}
       <input
         :value="draft.destination"
         type="url"
@@ -84,14 +81,14 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
       />
     </label>
     <p id="destination-help" class="field-help">
-      Encoded directly for this frontend demo. Use an absolute HTTPS URL.
+      {{ t('qr.studio.destinationHelp') }}
     </p>
     <p v-if="destinationIssue" id="destination-error" class="field-error" role="alert">
-      {{ destinationIssue.message }}
+      {{ t(`qr.validation.${destinationIssue.code}`, { min: 2, recommended: 4 }) }}
     </p>
     <div class="qr-metadata-grid">
       <label class="field-label"
-        >Campaign
+        >{{ t('qr.studio.campaign') }}
         <select
           :value="draft.campaignId"
           @change="emit('change', updateDraftCampaign(draft, inputValue($event), catalog))"
@@ -102,7 +99,7 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
         </select>
       </label>
       <label class="field-label"
-        >Channel
+        >{{ t('qr.studio.channel') }}
         <select :value="draft.channelId" @change="patch({ channelId: inputValue($event) })">
           <option v-for="item in channels" :key="item.id" :value="item.id">
             {{ item.name }}
@@ -110,12 +107,12 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
         </select>
       </label>
       <label class="field-label"
-        >Location
+        >{{ t('qr.studio.location') }}
         <select
           :value="draft.locationId ?? ''"
           @change="patch({ locationId: inputValue($event) || undefined })"
         >
-          <option value="">No location</option>
+          <option value="">{{ t('common.noLocation') }}</option>
           <option v-for="item in locations" :key="item.id" :value="item.id">
             {{ item.name }} · {{ item.city }}
           </option>
@@ -125,15 +122,15 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
 
     <div class="section-heading section-heading--divider">
       <div>
-        <p class="eyebrow">Appearance</p>
-        <h2>Visual system</h2>
+        <p class="eyebrow">{{ t('qr.studio.appearance') }}</p>
+        <h2>{{ t('qr.studio.visualSystem') }}</h2>
       </div>
       <span class="step-count">02</span>
     </div>
 
     <div class="qr-choice-grid">
       <fieldset class="qr-choice-group">
-        <legend>Module pattern</legend>
+        <legend>{{ t('qr.studio.modulePattern') }}</legend>
         <label v-for="style in qrModuleStyles" :key="style" class="qr-choice-card">
           <input
             type="radio"
@@ -142,11 +139,11 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
             :checked="draft.design.moduleStyle === style"
             @change="patchDesign({ moduleStyle: style })"
           />
-          <span>{{ qrModuleStyleLabels[style] }}</span>
+          <span>{{ t(`qr.styles.${style}`) }}</span>
         </label>
       </fieldset>
       <fieldset class="qr-choice-group">
-        <legend>Finder corners</legend>
+        <legend>{{ t('qr.studio.finderCorners') }}</legend>
         <label v-for="style in qrFinderStyles" :key="style" class="qr-choice-card">
           <input
             type="radio"
@@ -155,29 +152,29 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
             :checked="draft.design.finderStyle === style"
             @change="patchDesign({ finderStyle: style })"
           />
-          <span>{{ qrFinderStyleLabels[style] }}</span>
+          <span>{{ t(`qr.styles.${style}`) }}</span>
         </label>
       </fieldset>
     </div>
 
     <fieldset class="qr-color-group">
-      <legend>Solid colors</legend>
+      <legend>{{ t('qr.studio.solidColors') }}</legend>
       <label class="color-field">
-        <span>Foreground</span>
+        <span>{{ t('qr.studio.foreground') }}</span>
         <input
           type="color"
           :value="draft.design.foreground"
-          aria-label="Foreground color"
+          :aria-label="t('qr.studio.foreground')"
           @input="patchDesign({ foreground: inputValue($event) })"
         />
         <output>{{ draft.design.foreground }}</output>
       </label>
       <label class="color-field">
-        <span>Background</span>
+        <span>{{ t('qr.studio.background') }}</span>
         <input
           type="color"
           :value="draft.design.background"
-          aria-label="Background color"
+          :aria-label="t('qr.studio.background')"
           @input="patchDesign({ background: inputValue($event) })"
         />
         <output>{{ draft.design.background }}</output>
@@ -185,38 +182,38 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
     </fieldset>
 
     <fieldset class="qr-option-block">
-      <legend>Linear gradient</legend>
+      <legend>{{ t('qr.studio.gradient') }}</legend>
       <label class="toggle-row">
         <input
           type="checkbox"
           :checked="draft.design.gradient.enabled"
           @change="patchGradient({ enabled: inputChecked($event) })"
         />
-        <span>Use a two-color gradient</span>
+        <span>{{ t('qr.studio.useGradient') }}</span>
       </label>
       <div v-if="draft.design.gradient.enabled" class="qr-gradient-controls">
         <label class="color-field">
-          <span>Start</span>
+          <span>{{ t('qr.studio.start') }}</span>
           <input
             type="color"
             :value="draft.design.gradient.startColor"
-            aria-label="Gradient start color"
+            :aria-label="t('qr.studio.start')"
             @input="patchGradient({ startColor: inputValue($event) })"
           />
           <output>{{ draft.design.gradient.startColor }}</output>
         </label>
         <label class="color-field">
-          <span>End</span>
+          <span>{{ t('qr.studio.end') }}</span>
           <input
             type="color"
             :value="draft.design.gradient.endColor"
-            aria-label="Gradient end color"
+            :aria-label="t('qr.studio.end')"
             @input="patchGradient({ endColor: inputValue($event) })"
           />
           <output>{{ draft.design.gradient.endColor }}</output>
         </label>
         <label class="field-label field-label--compact"
-          >Direction
+          >{{ t('qr.studio.direction') }}
           <select
             :value="draft.design.gradient.direction"
             @change="
@@ -224,7 +221,7 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
             "
           >
             <option v-for="direction in qrGradientDirections" :key="direction" :value="direction">
-              {{ qrGradientDirectionLabels[direction] }}
+              {{ t(`qr.styles.${direction}`) }}
             </option>
           </select>
         </label>
@@ -233,9 +230,9 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
 
     <div class="qr-detail-grid">
       <fieldset class="qr-option-block">
-        <legend>Quiet zone</legend>
+        <legend>{{ t('qr.studio.quietZone') }}</legend>
         <label class="range-field">
-          <span>Margin</span>
+          <span>{{ t('qr.studio.margin') }}</span>
           <input
             type="range"
             :min="qrDesignConstraints.margin.min"
@@ -245,26 +242,31 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
             aria-describedby="qr-margin-help"
             @input="patchDesign({ margin: Number(inputValue($event)) })"
           />
-          <output>{{ draft.design.margin }} modules</output>
+          <output>{{ t('qr.studio.modules', { count: draft.design.margin }) }}</output>
         </label>
         <p id="qr-margin-help" class="field-help">
-          {{ qrDesignConstraints.margin.min }}–{{ qrDesignConstraints.margin.max }} modules;
-          {{ qrDesignConstraints.margin.recommended }} recommended.
+          {{
+            t('qr.studio.marginHelp', {
+              min: qrDesignConstraints.margin.min,
+              max: qrDesignConstraints.margin.max,
+              recommended: qrDesignConstraints.margin.recommended
+            })
+          }}
         </p>
       </fieldset>
       <fieldset class="qr-option-block">
-        <legend>Center mark</legend>
+        <legend>{{ t('qr.studio.centerMark') }}</legend>
         <label class="toggle-row">
           <input
             type="checkbox"
             :checked="draft.design.logo.enabled"
             @change="patchLogo({ enabled: inputChecked($event) })"
           />
-          <span>Show center mark</span>
+          <span>{{ t('qr.studio.showMark') }}</span>
         </label>
         <template v-if="draft.design.logo.enabled">
           <fieldset class="qr-mark-content-options">
-            <legend>Mark content</legend>
+            <legend>{{ t('qr.studio.markContent') }}</legend>
             <label class="qr-choice-card">
               <input
                 type="radio"
@@ -273,7 +275,7 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
                 :checked="draft.design.logo.content.type === 'eventscope'"
                 @change="patchLogo({ content: { type: 'eventscope' } })"
               />
-              <span>EventScope mark</span>
+              <span>{{ t('qr.studio.eventscopeMark') }}</span>
             </label>
             <label class="qr-choice-card">
               <input
@@ -283,11 +285,11 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
                 :checked="draft.design.logo.content.type === 'glyph'"
                 @change="patchLogo({ content: { type: 'glyph', value: 'E' } })"
               />
-              <span>Custom glyph</span>
+              <span>{{ t('qr.studio.customGlyph') }}</span>
             </label>
           </fieldset>
           <label v-if="draft.design.logo.content.type === 'glyph'" class="field-label">
-            Custom glyph
+            {{ t('qr.studio.customGlyph') }}
             <input
               :value="draft.design.logo.content.value"
               type="text"
@@ -304,7 +306,7 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
             id="center-mark-glyph-help"
             class="field-help"
           >
-            One visible Unicode character. Whitespace is trimmed.
+            {{ t('qr.studio.glyphHelp') }}
           </p>
           <p
             v-if="glyphIssue && draft.design.logo.content.type === 'glyph'"
@@ -312,10 +314,10 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
             class="field-error"
             role="alert"
           >
-            {{ glyphIssue.message }}
+            {{ t(`qr.validation.${glyphIssue.code}`) }}
           </p>
           <label class="range-field">
-            <span>Badge size</span>
+            <span>{{ t('qr.studio.badgeSize') }}</span>
             <input
               type="range"
               :min="qrDesignConstraints.centerMark.size.min"
@@ -328,9 +330,12 @@ const patchLogo = (value: Partial<QrStudioDraft['design']['logo']>) =>
             <output>{{ Math.round(draft.design.logo.size * 100) }}%</output>
           </label>
           <p id="center-mark-size-help" class="field-help">
-            {{ qrDesignConstraints.centerMark.size.min * 100 }}–{{
-              qrDesignConstraints.centerMark.size.max * 100
-            }}% of the QR width.
+            {{
+              t('qr.studio.sizeHelp', {
+                min: qrDesignConstraints.centerMark.size.min * 100,
+                max: qrDesignConstraints.centerMark.size.max * 100
+              })
+            }}
           </p>
         </template>
       </fieldset>

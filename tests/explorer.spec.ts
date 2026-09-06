@@ -95,8 +95,8 @@ describe('Explorer product surface', () => {
 
     expect(wrapper.text()).toContain('Follow the signal')
     expect(wrapper.text()).toContain('Northstar Launch')
-    expect(wrapper.text()).toContain('100K default')
-    expect(wrapper.text()).toContain('1M showcase')
+    expect(wrapper.text()).toContain('Standard · 100K events')
+    expect(wrapper.text()).toContain('Showcase · 1M events')
     expect(wrapper.text()).toContain('Volume across the selected range')
     expect(wrapper.text()).toContain('Sessions by location')
     expect(wrapper.text()).toContain(summary.values.events!.toLocaleString('en-US'))

@@ -558,7 +558,7 @@ function compareSummaryFor(storage: AnalyticsStorage, query: AnalyticsQuery): Co
   }
 }
 
-/** Optimized pure engine over internal columnar storage; semantics mirror the Phase 3 reference engine. */
+/** Optimized pure engine over internal columnar storage; semantics mirror the reference engine. */
 export function createRuntimeAnalyticsEngine(storage: AnalyticsStorage): AnalyticsEngine {
   const engine: AnalyticsEngine = {
     summary: (query) => summaryFor(storage, query),

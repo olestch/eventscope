@@ -31,7 +31,7 @@ export type OperatingSystem = 'iOS' | 'Android' | 'Windows' | 'macOS' | 'Linux'
 
 /**
  * An immutable source fact. Sessions and visitors are reconstructable from IDs,
- * so Phase 2 does not duplicate them as separately persisted entity collections.
+ * so the dataset does not duplicate them as separately persisted entity collections.
  */
 export interface EventRecord {
   readonly id: string

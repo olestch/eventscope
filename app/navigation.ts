@@ -1,8 +1,8 @@
 export const navigationItems = [
-  { label: 'Explore', to: '/explore', shortLabel: 'EX' },
-  { label: 'QR studio', to: '/qr', shortLabel: 'QR' },
-  { label: 'Reports', to: '/reports', shortLabel: 'RP' },
-  { label: 'Methodology', to: '/methodology', shortLabel: 'MT' }
+  { labelKey: 'explore', to: '/explore', shortLabel: 'EX' },
+  { labelKey: 'qr', to: '/qr', shortLabel: 'QR' },
+  { labelKey: 'reports', to: '/reports', shortLabel: 'RP' },
+  { labelKey: 'methodology', to: '/methodology', shortLabel: 'MT' }
 ] as const
 
 export const routeCatalog = [

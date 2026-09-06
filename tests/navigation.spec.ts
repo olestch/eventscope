@@ -22,8 +22,18 @@ describe('application navigation', () => {
     const trigger = wrapper.get('button[aria-label="Open navigation"]')
 
     await trigger.trigger('click')
-    expect(wrapper.find('#mobile-navigation').exists()).toBe(true)
+    const drawer = wrapper.get('#mobile-navigation')
+    expect(drawer.attributes()).toMatchObject({ role: 'dialog', 'aria-modal': 'true' })
     expect(document.activeElement?.textContent).toContain('Explore')
+
+    const focusable = drawer.findAll('a, button, select')
+    const first = focusable[0]!
+    const last = focusable.at(-1)!
+    await first.element.focus()
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true }))
+    expect(document.activeElement).toBe(last.element)
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }))
+    expect(document.activeElement).toBe(first.element)
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     await wrapper.vm.$nextTick()

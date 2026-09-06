@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { ExplorerProfile } from '~/features/explorer/queryState'
 
 defineProps<{
@@ -8,6 +9,7 @@ defineProps<{
   runtimeError: boolean
 }>()
 const filterTrigger = ref<HTMLButtonElement>()
+const { t } = useI18n()
 defineExpose({ focusFilterTrigger: () => filterTrigger.value?.focus() })
 const emit = defineEmits<{
   profile: [profile: ExplorerProfile]
@@ -17,14 +19,14 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <section class="explorer-toolbar" aria-label="Explorer controls">
+  <section class="explorer-toolbar" :aria-label="t('explorer.controls')">
     <div>
-      <span class="control-label">Dataset</span>
+      <span class="control-label">{{ t('explorer.dataset') }}</span>
       <div class="profile-switch">
         <button
           v-for="option in [
-            { id: 'large', label: '100K default' },
-            { id: 'showcase', label: '1M showcase' }
+            { id: 'large', label: t('explorer.standard') },
+            { id: 'showcase', label: t('explorer.showcase') }
           ] as const"
           :key="option.id"
           type="button"
@@ -43,10 +45,10 @@ const emit = defineEmits<{
         type="button"
         @click="emit('openFilters', $event.detail === 0 ? 'keyboard' : 'pointer')"
       >
-        Filters <span class="filter-count">{{ activeFilterCount }}</span>
+        {{ t('explorer.filters') }} <span class="filter-count">{{ activeFilterCount }}</span>
       </button>
       <button v-if="runtimeError" class="button button--secondary" type="button" @click="emit('retry')">
-        Retry analytics
+        {{ t('explorer.retryAnalytics') }}
       </button>
     </div>
   </section>

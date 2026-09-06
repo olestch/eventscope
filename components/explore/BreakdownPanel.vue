@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AnalyticsChart from '~/components/explore/AnalyticsChart.vue'
 import {
-  breakdownLabels,
   buildBreakdownChartOption,
-  measureLabels,
+  translatedBreakdownLabel,
+  translatedMeasureLabel,
   type BreakdownViewModel
 } from '~/features/explorer/presentation'
 import {
@@ -21,11 +22,16 @@ const props = defineProps<{
   measure: ExplorerBreakdownMeasure
   selectedValues: string[]
 }>()
+const { locale, t } = useI18n()
+const presentationLocale = computed(() => (locale.value === 'ru' ? 'ru' : 'en'))
+const translate = (key: string, params?: Record<string, unknown>) => t(key, params ?? {})
 const emit = defineEmits<{
   change: [selection: { breakdown: ExplorerBreakdown; measure: ExplorerBreakdownMeasure }]
   filter: [intent: BreakdownSelectionIntent]
 }>()
-const option = computed(() => buildBreakdownChartOption(props.model, false))
+const option = computed(() =>
+  buildBreakdownChartOption(props.model, false, presentationLocale.value, translate)
+)
 
 const updateBreakdown = (event: Event) =>
   emit('change', {
@@ -49,24 +55,31 @@ const filterRow = (index: number) => {
   <figure class="breakdown-panel explorer-visualization">
     <figcaption class="visualization-heading visualization-heading--controls">
       <div>
-        <p class="eyebrow">Ranked breakdown</p>
-        <h2>{{ model.measureLabel }} by {{ breakdownLabels[model.dimension].toLowerCase() }}</h2>
-        <p>Select a bar to add that category to the committed filters.</p>
+        <p class="eyebrow">{{ t('explorer.breakdownPanel.eyebrow') }}</p>
+        <h2>
+          {{
+            t('explorer.breakdownPanel.title', {
+              measure: model.measureLabel,
+              dimension: translatedBreakdownLabel(model.dimension, translate).toLowerCase()
+            })
+          }}
+        </h2>
+        <p>{{ t('explorer.breakdownPanel.instruction') }}</p>
       </div>
       <div class="breakdown-controls">
         <label>
-          <span>Dimension</span>
+          <span>{{ t('explorer.breakdownPanel.dimension') }}</span>
           <select :value="breakdown" @change="updateBreakdown">
             <option v-for="value in explorerBreakdowns" :key="value" :value="value">
-              {{ breakdownLabels[value] }}
+              {{ translatedBreakdownLabel(value, translate) }}
             </option>
           </select>
         </label>
         <label>
-          <span>Measure</span>
+          <span>{{ t('explorer.breakdownPanel.measure') }}</span>
           <select :value="measure" @change="updateMeasure">
             <option v-for="value in explorerBreakdownMeasures" :key="value" :value="value">
-              {{ measureLabels[value] }}
+              {{ translatedMeasureLabel(value, translate) }}
             </option>
           </select>
         </label>
@@ -75,24 +88,26 @@ const filterRow = (index: number) => {
     <AnalyticsChart
       :option="option"
       :empty="!model.rows.length"
-      empty-message="No categories match the committed filters."
-      label="Ranked categorical breakdown. Exact values follow in the data table."
+      :empty-message="t('explorer.breakdownPanel.empty')"
+      :label="t('explorer.breakdownPanel.chartLabel')"
       interactive
       @select="filterRow"
     />
     <details class="chart-data" open>
-      <summary>Breakdown data</summary>
+      <summary>{{ t('explorer.breakdownPanel.data') }}</summary>
       <div class="table-scroll">
         <table>
           <caption class="sr-only">
-            Ranked breakdown values
+            {{
+              t('explorer.breakdownPanel.caption')
+            }}
           </caption>
           <thead>
             <tr>
-              <th scope="col">Category</th>
+              <th scope="col">{{ t('explorer.breakdownPanel.category') }}</th>
               <th scope="col">{{ model.measureLabel }}</th>
               <th scope="col">{{ model.secondaryMeasureLabel }}</th>
-              <th scope="col">Filter</th>
+              <th scope="col">{{ t('explorer.breakdownPanel.filter') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -109,8 +124,8 @@ const filterRow = (index: number) => {
                 >
                   {{
                     selectedValues.includes(row.key)
-                      ? `${row.label} already filtered`
-                      : `Filter to ${row.label}`
+                      ? t('explorer.breakdownPanel.already', { name: row.label })
+                      : t('explorer.breakdownPanel.filterTo', { name: row.label })
                   }}
                 </button>
               </td>

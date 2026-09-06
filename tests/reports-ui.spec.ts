@@ -75,7 +75,7 @@ describe('Reports UI workflow', () => {
       props: { job: job('failed'), catalog: referenceCatalog },
       global: { stubs: { NuxtLink: RouterLinkStub } }
     })
-    expect(wrapper.get('[role="alert"]').text()).toContain('Controlled failure')
+    expect(wrapper.get('[role="alert"]').text()).toContain('Controlled demo failure')
     await wrapper.get('button').trigger('click')
     expect(wrapper.emitted('retry')).toEqual([['job-failed']])
   })

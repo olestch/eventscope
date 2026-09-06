@@ -1,7 +1,7 @@
 # Reports workflow
 
-Phase 9 replaces the original static Reports placeholder with a typed asynchronous job workflow.
-It deliberately does not render reports in Vue or generate PDFs in the browser.
+EventScope models Reports as a typed asynchronous job workflow. It deliberately does not render
+reports in Vue or generate user-specific PDFs in the browser.
 
 ## Contracts
 

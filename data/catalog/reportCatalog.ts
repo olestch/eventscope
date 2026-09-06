@@ -6,8 +6,8 @@ export interface ReportSectionOption {
   summary: string
 }
 
-// Phase 1's deterministic narrative definitions remain catalog data even though
-// Phase 9 replaces their placeholder UI with real report-job orchestration.
+// Deterministic narrative definitions remain catalog data while the Reports UI
+// orchestrates typed asynchronous jobs around them.
 export const reportCatalog = [
   { id: 'report-northstar-week-one', campaignId: 'cmp-northstar' },
   { id: 'report-activation-notes', campaignId: 'cmp-northstar' }

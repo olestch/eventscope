@@ -1,5 +1,6 @@
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useEventAnalytics } from '~/composables/useEventAnalytics'
 import { northstarScenarioV1 } from '~/data/scenarios/northstarV1'
 import {
@@ -43,6 +44,9 @@ import {
 import { SupersededAnalyticsRequestError } from '~/services/analytics/AnalyticsGateway'
 
 export function useExplorerController() {
+  const { locale, t } = useI18n()
+  const presentationLocale = computed(() => (locale.value === 'ru' ? 'ru' : 'en'))
+  const translate = (key: string, params?: Record<string, unknown>) => t(key, params ?? {})
   const route = useRoute()
   const router = useRouter()
   const analytics = useEventAnalytics()
@@ -53,7 +57,6 @@ export function useExplorerController() {
   const results = shallowRef<ExplorerResultSet>()
   const queryPending = ref(false)
   const queryError = ref<string>()
-  const statusMessage = ref('')
   const filtersOpen = ref(false)
   const coordinator = new ExplorerQueryCoordinator(analytics)
   let routeExecutionToken = 0
@@ -62,31 +65,44 @@ export function useExplorerController() {
     minimum: utcDatePart(referencePeriod.start),
     maximum: utcDatePart(referencePeriod.end)
   }
-  const activeFilterChips = computed(() => buildActiveFilterChips(committed.value, analytics.catalog))
+  const activeFilterChips = computed(() =>
+    buildActiveFilterChips(committed.value, analytics.catalog, translate)
+  )
   const activeMetadata = computed(() =>
     analytics.state.metadata?.profile === committed.value.profile ? analytics.state.metadata : undefined
   )
   const timelineModel = computed(() =>
-    results.value ? buildTimelineViewModel(results.value.timeline) : undefined
+    results.value ? buildTimelineViewModel(results.value.timeline, presentationLocale.value) : undefined
   )
   const breakdownModel = computed(() =>
     results.value
       ? buildBreakdownViewModel(
           results.value.breakdown,
           analytics.catalog,
-          results.value.state.breakdownMeasure
+          results.value.state.breakdownMeasure,
+          presentationLocale.value,
+          translate
         )
       : undefined
   )
   const comparisonModel = computed(() =>
-    results.value?.comparison ? buildComparisonViewModel(results.value.comparison) : undefined
+    results.value?.comparison
+      ? buildComparisonViewModel(results.value.comparison, presentationLocale.value, translate)
+      : undefined
   )
   const funnelModel = computed(() =>
-    results.value?.funnel ? buildFunnelViewModel(results.value.funnel) : undefined
+    results.value?.funnel
+      ? buildFunnelViewModel(results.value.funnel, presentationLocale.value, translate)
+      : undefined
   )
   const temporalModel = computed(() =>
     results.value?.temporal
-      ? buildTemporalHeatmapViewModel(results.value.temporal, results.value.state.temporalMeasure)
+      ? buildTemporalHeatmapViewModel(
+          results.value.temporal,
+          results.value.state.temporalMeasure,
+          presentationLocale.value,
+          translate
+        )
       : undefined
   )
   const selectedBreakdownValues = computed(() => {
@@ -102,29 +118,38 @@ export function useExplorerController() {
   })
   const noResults = computed(() => results.value?.summary.metadata.matchedEventCount === 0)
   const pending = computed(() => queryPending.value || analytics.state.status === 'generating')
+  const statusMessage = computed(() => {
+    if (queryPending.value) {
+      return results.value ? t('explorer.statusUpdating') : t('explorer.statusFirst')
+    }
+    if (queryError.value) return t('explorer.statusFailed')
+    if (!results.value) return ''
+    return t('explorer.statusReady', {
+      count: formatCount(results.value.summary.metadata.matchedEventCount, presentationLocale.value)
+    })
+  })
   const scopeLabel = computed(() => {
     const campaigns = committed.value.campaignIds.map(
       (id) => analytics.catalog.campaigns.find((campaign) => campaign.id === id)?.name ?? id
     )
-    if (!campaigns.length) return 'All campaigns'
+    if (!campaigns.length) return t('explorer.allCampaigns')
     if (campaigns.length === 1) return campaigns[0]!
-    return `${campaigns.length} campaigns`
+    return t('explorer.campaignCount', { count: campaigns.length })
   })
   const qrContextLabel = computed(() => {
     const selected = committed.value.qrCodeIds.map(
       (id) => analytics.catalog.qrCodes.find((qr) => qr.id === id)?.name ?? id
     )
     if (!selected.length) return undefined
-    return selected.length === 1 ? selected[0] : `${selected.length} scenario QR codes`
+    return selected.length === 1
+      ? selected[0]
+      : t('explorer.scenarioQrCount', { count: selected.length })
   })
 
   async function executeCommitted(state: ExplorerQueryState, forceInitialization = false) {
     const token = ++routeExecutionToken
     queryPending.value = true
     queryError.value = undefined
-    statusMessage.value = results.value
-      ? 'Updating the committed query; the previous complete result remains visible.'
-      : 'Preparing the first analytical result.'
     try {
       if (
         forceInitialization ||
@@ -137,7 +162,6 @@ export function useExplorerController() {
       const nextResults = await coordinator.execute(state)
       if (token !== routeExecutionToken) return
       results.value = nextResults
-      statusMessage.value = `Query complete · ${formatCount(nextResults.summary.metadata.matchedEventCount)} matching events.`
     } catch (error) {
       if (
         token !== routeExecutionToken ||
@@ -147,7 +171,6 @@ export function useExplorerController() {
         return
       }
       queryError.value = error instanceof Error ? error.message : String(error)
-      statusMessage.value = 'The analytical query failed; the committed route state is preserved.'
     } finally {
       if (token === routeExecutionToken) queryPending.value = false
     }

@@ -79,6 +79,11 @@ describe('local Analytics Core baseline', () => {
           measures: [...query.measures],
           bucket: { kind: 'adaptive', maxPoints: 48 }
         }),
+      temporalHeatmap: () =>
+        engine.temporalHeatmap({
+          ...query,
+          measures: ['sessions']
+        }),
       funnel: () =>
         engine.funnel(
           { ...query, measures: ['sessions'] },

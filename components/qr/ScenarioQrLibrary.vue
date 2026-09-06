@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import QrPreview from './QrPreview.vue'
 import type { ReferenceCatalog } from '~/domain/events/models'
 import type { QRCodeDefinition } from '~/domain/tracking/models'
@@ -9,6 +10,7 @@ import { sanitizeQrFilename } from '~/features/qr/presentation'
 import { downloadQrPng, downloadQrSvg } from '~/services/qr/browserExport'
 
 const props = defineProps<{ catalog: ReferenceCatalog }>()
+const { t } = useI18n()
 const exportMessage = ref('')
 const exportError = ref(false)
 const exportingId = ref<string>()
@@ -21,7 +23,7 @@ const exportSvg = (qr: QRCodeDefinition) => {
   try {
     downloadQrSvg(artifact.svg, sanitizeQrFilename(qr.name))
     exportError.value = false
-    exportMessage.value = `Exported ${qr.name} as SVG.`
+    exportMessage.value = t('qr.library.exportedSvg', { name: qr.name })
   } catch (error) {
     exportError.value = true
     exportMessage.value = error instanceof Error ? error.message : 'SVG export failed.'
@@ -35,7 +37,7 @@ const exportPng = async (qr: QRCodeDefinition) => {
   try {
     await downloadQrPng(artifact.svg, sanitizeQrFilename(qr.name))
     exportError.value = false
-    exportMessage.value = `Exported ${qr.name} as PNG.`
+    exportMessage.value = t('qr.library.exportedPng', { name: qr.name })
   } catch (error) {
     exportError.value = true
     exportMessage.value = error instanceof Error ? error.message : 'PNG export failed.'
@@ -49,10 +51,10 @@ const exportPng = async (qr: QRCodeDefinition) => {
   <section class="qr-product-section" aria-labelledby="scenario-qr-title">
     <header class="qr-section-heading">
       <div>
-        <p class="eyebrow">Deterministic demo identities</p>
-        <h2 id="scenario-qr-title">Scenario QR</h2>
+        <p class="eyebrow">{{ t('qr.scenario.eyebrow') }}</p>
+        <h2 id="scenario-qr-title">{{ t('qr.scenario.title') }}</h2>
       </div>
-      <p>Read-only QR codes connected to the deterministic analytics dataset.</p>
+      <p>{{ t('qr.scenario.description') }}</p>
     </header>
     <p
       v-if="exportMessage"
@@ -62,25 +64,27 @@ const exportPng = async (qr: QRCodeDefinition) => {
     >
       {{ exportMessage }}
     </p>
-    <div class="qr-library-grid" aria-label="Scenario QR codes">
+    <div class="qr-library-grid" :aria-label="t('qr.scenario.region')">
       <article v-for="qr in catalog.qrCodes" :key="qr.id" class="saved-qr-card scenario-qr-card">
         <div class="saved-qr-card__preview"><QrPreview :draft="draftFor(qr)" :label="qr.name" /></div>
         <div class="saved-qr-card__body">
-          <p class="qr-availability qr-availability--available">Analytics available</p>
+          <p class="qr-availability qr-availability--available">
+            {{ t('qr.scenario.available') }}
+          </p>
           <h3>{{ qr.name }}</h3>
           <p>
             {{ contextFor(qr).campaign }} · {{ contextFor(qr).channel }} · {{ contextFor(qr).location }}
           </p>
           <p class="saved-qr-card__destination">{{ qr.destination }}</p>
-          <div class="saved-qr-card__actions" :aria-label="`Actions for scenario QR ${qr.name}`">
+          <div class="saved-qr-card__actions" :aria-label="t('qr.scenario.actions', { name: qr.name })">
             <NuxtLink
               class="button button--primary"
               :to="scenarioQrAnalyticsLocation(qr, catalog)"
-              :aria-label="`View analytics for ${qr.name}`"
-              >View analytics</NuxtLink
+              :aria-label="t('qr.scenario.viewFor', { name: qr.name })"
+              >{{ t('qr.scenario.view') }}</NuxtLink
             >
             <button class="button button--secondary" type="button" @click="exportSvg(qr)">
-              Export SVG
+              {{ t('qr.library.exportSvg') }}
             </button>
             <button
               class="button button--secondary"
@@ -88,7 +92,7 @@ const exportPng = async (qr: QRCodeDefinition) => {
               :disabled="exportingId === qr.id"
               @click="exportPng(qr)"
             >
-              {{ exportingId === qr.id ? 'Exporting…' : 'Export PNG' }}
+              {{ exportingId === qr.id ? t('qr.library.exporting') : t('qr.library.exportPng') }}
             </button>
           </div>
         </div>
